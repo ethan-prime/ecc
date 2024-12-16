@@ -1,3 +1,7 @@
+#include <stdio.h>
+
+#pragma once
+
 typedef enum {
     KEYW_INT,
     IDENTIFIER,
@@ -8,13 +12,13 @@ typedef enum {
     KEYW_RETURN,
     CONSTANT,
     SEMICOLON,
-    CLOSE_BRACE
+    CLOSE_BRACE,
 } token_id;
 
 typedef union {
     int i;
     double d;
-    char* identifier;
+    char* s;
 } token_value;
 
 typedef struct {

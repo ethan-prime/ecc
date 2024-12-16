@@ -3,10 +3,11 @@ CFLAGS = -Wall -Wextra -g -O3
 SRC = $(shell find src -name '*.c')
 OBJ = $(SRC:.c=.o)
 
-all: compiler
+all: ecc
 
-compiler: $(OBJ)
+ecc: $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $(OBJ)
+	rm -rf $(OBJ)
 
 clean:
-	rm -rf $(OBJ) compiler
+	rm -rf $(OBJ) ecc

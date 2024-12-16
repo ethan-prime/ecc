@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include "lexer/lexer.h"
+#include "lexer/tokens.h"
 
 void panic(char* msg) {
     printf("%s\n", msg);
@@ -30,5 +32,14 @@ int main(int argc, char** argv) {
             panic("fatal error");
         }
     }
+
+    lexer_t* lexer = lexer_init(source_file);
+    lexer_read_file(lexer);
+
+    printf("File contents:\n");
+    printf("%s\n", lexer->buf);
+
+    lexer_tokenize(lexer);
+
     return 0;
 }
