@@ -89,7 +89,7 @@ token* lexer_next_token(lexer_t* lexer) {
         lexer_read_char(lexer);
     }
 
-    char buf[256];
+    char buf[1024];
     unsigned int index = 0;
 
     if (isdigit(lexer->cur_char)) {
