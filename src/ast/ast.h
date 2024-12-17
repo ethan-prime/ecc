@@ -1,5 +1,6 @@
 // WE NEED TO USE UNIONS TO SUPPORT MULTIPLE TYPES...
 // RIGHT NOW WE ARE ONLY SUPPORTING ONE
+#pragma once
 
 typedef struct constant_node {
     int val;

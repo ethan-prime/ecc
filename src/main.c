@@ -4,6 +4,7 @@
 #include <string.h>
 #include "lexer/lexer.h"
 #include "lexer/tokens.h"
+#include "parser/parser.h"
 
 void panic(char* msg) {
     printf("%s\n", msg);
@@ -36,10 +37,17 @@ int main(int argc, char** argv) {
     lexer_t* lexer = lexer_init(source_file);
     lexer_read_file(lexer);
 
+    /*
     printf("File contents:\n");
     printf("%s\n", lexer->buf);
+    */
 
-    lexer_tokenize(lexer);
+    token_queue* tq = lexer_tokenize(lexer);
+
+    program_node* program = parse_program(tq);
+    
+    printf("Parsed program:\n");
+    print_ast(program);
 
     return 0;
 }

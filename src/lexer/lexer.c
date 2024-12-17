@@ -69,7 +69,7 @@ int is_keyword(char* str, token_id* id) {
     } else if (strcmp(str, "void") == 0) {
         *id = KEYW_VOID;
         return 1;
-    } else if (strcmp(str, "void") == 0) {
+    } else if (strcmp(str, "return") == 0) {
         *id = KEYW_RETURN;
         return 1;
     }
@@ -136,7 +136,7 @@ token* lexer_next_token(lexer_t* lexer) {
         t->id = SEMICOLON;
         lexer_read_char(lexer);
     } else {
-        printf("UNKNOWN TOKEN ENCOUNTERED");
+        printf("UNKNOWN TOKEN ENCOUNTERED\n");
         exit(1);
     }
 
@@ -167,7 +167,7 @@ void print_token(token t) {
         case SEMICOLON:
             printf(";"); break;
         default:
-            printf("UNKNOWN TOKEN");
+            printf("UNKNOWN TOKEN\n");
             exit(1);
             break;
     }
@@ -186,7 +186,7 @@ token_queue* lexer_tokenize(lexer_t* lexer) {
         t = lexer_next_token(lexer);
     }
 
-    print_token_queue(tq);
+    //print_token_queue(tq);
 
     return tq;
 }
