@@ -44,10 +44,18 @@ int main(int argc, char** argv) {
 
     token_queue* tq = lexer_tokenize(lexer);
 
+    if (lex) {
+        exit(0);
+    }
+
     program_node* program = parse_program(tq);
-    
+
     printf("Parsed program:\n");
     print_ast(program);
+
+    if (parse) {
+        exit(0);
+    }
 
     return 0;
 }
