@@ -3,5 +3,5 @@
 
 #pragma once
 
-// returns true if head matches token_id, false otherwise
-bool expect(token_queue* tq, token_id);
+// returns 1 if head matches token_id, 0 otherwise
+int expect(token_queue* tq, token_id id);
