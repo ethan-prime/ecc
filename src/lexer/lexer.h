@@ -1,4 +1,5 @@
 #include "tokens.h"
+#include "../utils/tokenqueue.h"
 
 #pragma once
 
@@ -31,4 +32,4 @@ int is_keyword(char* str, token_id* id);
 void print_token(token t);
 
 // tokenizes the contents of *buf.
-void lexer_tokenize(lexer_t* lexer);
+token_queue* lexer_tokenize(lexer_t* lexer);

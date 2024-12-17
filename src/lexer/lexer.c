@@ -4,6 +4,7 @@
 #include "tokens.h"
 #include "lexer.h"
 #include <string.h>
+#include "../utils/tokenqueue.h"
 
 // initializes a lexer struct and returns it.
 lexer_t* lexer_init(char* source_file) {
@@ -135,7 +136,8 @@ token* lexer_next_token(lexer_t* lexer) {
         t->id = SEMICOLON;
         lexer_read_char(lexer);
     } else {
-        return NULL;
+        printf("UNKNOWN TOKEN ENCOUNTERED");
+        exit(1);
     }
 
     return t;
@@ -165,17 +167,26 @@ void print_token(token t) {
         case SEMICOLON:
             printf(";"); break;
         default:
-            printf("UNKNOWN TOKEN"); break;
+            printf("UNKNOWN TOKEN");
+            exit(1);
+            break;
     }
     printf("\n");
 };
 
 // tokenizes the contents of *buf.
-// TODO: store these, don't just print...
-void lexer_tokenize(lexer_t* lexer) {
+// returns token queue of tokenized input.
+token_queue* lexer_tokenize(lexer_t* lexer) {
+    token_queue* tq = token_queue_init();
+
     token* t = lexer_next_token(lexer);
     while (t != NULL) {
-        print_token(*t);
+        // add token to token queue
+        token_queue_enq(tq, t);
         t = lexer_next_token(lexer);
     }
+
+    print_token_queue(tq);
+
+    return tq;
 }
