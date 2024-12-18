@@ -5,6 +5,7 @@
 #include "lexer/lexer.h"
 #include "lexer/tokens.h"
 #include "parser/parser.h"
+#include "assembly/asm_ast.h"
 
 void panic(char* msg) {
     printf("%s\n", msg);
@@ -48,12 +49,22 @@ int main(int argc, char** argv) {
         exit(0);
     }
 
+    printf("Sucessfully lexed program...\n");
+
     program_node* program = parse_program(tq);
 
     printf("Parsed program:\n");
     print_ast(program);
 
     if (parse) {
+        exit(0);
+    }
+
+    program_to_asm(program);
+
+    printf("Succesfully codegened program...\n");
+
+    if (codegen) {
         exit(0);
     }
 

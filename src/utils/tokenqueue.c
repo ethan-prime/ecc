@@ -47,6 +47,9 @@ token* token_queue_deq(token_queue* tq) {
 
 // returns head of queue, doesnt remove.
 token* token_queue_cur(token_queue* tq) {
+    if (tq->head == NULL) {
+        return NULL;
+    }
     return tq->head->tok;
 }
 
