@@ -119,6 +119,7 @@ void *list_get(list *l, int pos)
     while (idx < pos)
     {
         curr = curr->next;
+        idx++;
     }
 
     return curr->val;

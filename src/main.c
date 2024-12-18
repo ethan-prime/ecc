@@ -6,6 +6,7 @@
 #include "lexer/tokens.h"
 #include "parser/parser.h"
 #include "assembly/asm_ast.h"
+#include "codegen/codegen.h"
 
 void panic(char* msg) {
     printf("%s\n", msg);
@@ -60,13 +61,30 @@ int main(int argc, char** argv) {
         exit(0);
     }
 
-    program_to_asm(program);
+    asm_program_node* program_asm = program_to_asm(program);
 
     printf("Succesfully codegened program...\n");
 
     if (codegen) {
         exit(0);
     }
+
+    char* dest_file = (char*)malloc(sizeof((strlen(source_file)+1)*sizeof(char)));
+    strncpy(dest_file, source_file, strlen(source_file)-2);
+    dest_file[strlen(source_file)-2] = '.';
+    dest_file[strlen(source_file)-1] = 's';
+    dest_file[strlen(source_file)] = '\0';
+
+    printf("%s\n", dest_file);
+
+    FILE *file = fopen(dest_file, "w");
+    if (file == NULL) {
+        panic("Error opening file");
+    }
+
+    program_emit(file, program_asm);
+
+    fclose(file);
 
     return 0;
 }
