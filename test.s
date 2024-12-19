@@ -1,5 +1,5 @@
 .globl main
 main:
-	movq $420, %rax
+	movl $2, %eax
 	ret
 .section .note.GNU-stack,"",@progbits

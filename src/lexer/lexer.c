@@ -135,6 +135,17 @@ token* lexer_next_token(lexer_t* lexer) {
     } else if (lexer->cur_char == ';') {
         t->id = SEMICOLON;
         lexer_read_char(lexer);
+    } else if (lexer->cur_char == '~') {
+        t->id = TILDE;
+        lexer_read_char(lexer);
+    } else if (lexer->cur_char == '-') {
+        lexer_read_char(lexer);
+        if (lexer->cur_char == '-') {
+            t->id = HYPHEN_HYPHEN;
+            lexer_read_char(lexer);
+        } else {
+            t->id = HYPHEN;
+        }
     } else {
         printf("UNKNOWN TOKEN ENCOUNTERED\n");
         exit(1);
@@ -166,6 +177,12 @@ void print_token(token t) {
             printf("constant (%d)", t.val.i); break;
         case SEMICOLON:
             printf(";"); break;
+        case HYPHEN:
+            printf("-"); break;
+        case HYPHEN_HYPHEN:
+            printf("--"); break;
+        case TILDE:
+            printf("~"); break;    
         default:
             printf("UNKNOWN TOKEN\n");
             exit(1);

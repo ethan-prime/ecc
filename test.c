@@ -1,3 +1,3 @@
 int main() {
-    return 420;
+    return ~(-2);
 }

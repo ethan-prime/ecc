@@ -10,7 +10,7 @@ void operand_emit(FILE* file, operand_node* operand) {
 }
 
 void mov_emit(FILE* file, asm_move_node* mov) {
-    fprintf(file, "\tmovq ");
+    fprintf(file, "\tmovl ");
     operand_emit(file, &mov->src);
     fprintf(file, ", ");
     operand_emit(file, &mov->dest);

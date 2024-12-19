@@ -13,6 +13,9 @@ typedef enum {
     CONSTANT,
     SEMICOLON,
     CLOSE_BRACE,
+    TILDE,
+    HYPHEN,
+    HYPHEN_HYPHEN,
 } token_id;
 
 typedef union {

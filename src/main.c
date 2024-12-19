@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
     }
 
     printf("Sucessfully lexed program...\n");
-
+    
     program_node* program = parse_program(tq);
 
     printf("Parsed program:\n");
