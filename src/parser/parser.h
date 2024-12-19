@@ -10,6 +10,7 @@ int expect(token_queue* tq, token_id id);
 // parses and returns corresponding ast nodes
 constant_node* parse_constant(token_queue* tq);
 
+unary_node* parse_unary_expr(token_queue* tq);
 expr_node* parse_expr(token_queue* tq);
 
 return_node* parse_return(token_queue* tq);

@@ -6,8 +6,28 @@ typedef struct constant_node {
     int val;
 } constant_node;
 
+typedef enum {
+    COMPLEMENT,
+    NEGATE,
+} unary_op;
+
+struct expr_node;
+typedef struct {
+    unary_op op;
+    struct expr_node* expr;
+} unary_node;
+
+typedef enum {
+    EXPR_CONSTANT,
+    EXPR_UNARY,
+} expr_type;
+
 typedef struct expr_node {
-    constant_node* constant;
+    expr_type type;
+    union {
+        constant_node* constant;
+        unary_node* unary_expr;
+    } expr;
 } expr_node;
 
 typedef struct return_node {

@@ -3,6 +3,7 @@
 
 #define MALLOC(type) ((type *)malloc(sizeof(type)))
 
+/*
 // STATEMENTS:
 list(asm_instruction_node) * return_to_asm(return_node *ret)
 {
@@ -58,3 +59,4 @@ asm_program_node *program_to_asm(program_node *program)
 
     return prgm;
 }
+*/

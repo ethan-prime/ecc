@@ -9,19 +9,30 @@ void print_tabs(int n)
     }
 }
 
-void print_constant(constant_node *constant, int depth) {
-    print_tabs(depth);
+void print_constant(constant_node *constant) {
     printf("Constant(%d)\n", constant->val);
 }
 
 void print_expr(expr_node *expr, int depth) {
     print_tabs(depth);
-    print_constant(expr->constant, depth);
+    if (expr->type == EXPR_CONSTANT) {
+        print_constant(expr->expr.constant);
+    } else if (expr->type == EXPR_UNARY) {
+        printf("Unary(");
+        if (expr->expr.unary_expr->op == COMPLEMENT) {
+            printf("Complement,\n");
+        } else if (expr->expr.unary_expr->op == NEGATE) {
+            printf("Negate,\n");
+        }
+        print_expr(expr->expr.unary_expr->expr, depth+1);
+        print_tabs(depth);
+        printf(")\n");
+    }
 }
 
 void print_return(return_node *ret, int depth) {
     printf("Return(\n");
-    print_expr(ret->expr, depth);
+    print_expr(ret->expr, depth+1);
     print_tabs(depth);
     printf(")\n");
 }

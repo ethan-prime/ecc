@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
     }
 
     printf("Sucessfully lexed program...\n");
-    
+
     program_node* program = parse_program(tq);
 
     printf("Parsed program:\n");
@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
         exit(0);
     }
 
-    asm_program_node* program_asm = program_to_asm(program);
+    /*asm_program_node* program_asm = program_to_asm(program);
 
     printf("Succesfully codegened program...\n");
 
@@ -85,6 +85,7 @@ int main(int argc, char** argv) {
     program_emit(file, program_asm);
 
     fclose(file);
+    */
 
     return 0;
 }

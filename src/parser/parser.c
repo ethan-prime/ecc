@@ -34,10 +34,51 @@ constant_node* parse_constant(token_queue* tq) {
     return node;
 }
 
+int is_unary_op(token* tok) {
+    return (tok->id == HYPHEN || tok->id == TILDE);
+}
+
+unary_node* parse_unary_expr(token_queue* tq) {
+    unary_node* node = MALLOC(unary_node);
+
+    if(!is_unary_op(token_queue_cur(tq))) {
+        parser_error("a unary operator", token_queue_cur(tq));
+    }
+
+    token* cur = token_queue_cur(tq);
+
+    if (cur->id == HYPHEN) {
+        node->op = NEGATE;
+    } else if (cur->id == TILDE) {
+        node->op = COMPLEMENT;
+    }
+
+    token_queue_deq(tq);
+
+    node->expr = parse_expr(tq);
+    return node;
+}
+
 expr_node* parse_expr(token_queue* tq) {
     expr_node* node = MALLOC(expr_node);
 
-    node->constant = parse_constant(tq);
+    token* cur = token_queue_cur(tq);
+
+    if (cur->id == CONSTANT) {
+        node->type = EXPR_CONSTANT;
+        node->expr.constant = parse_constant(tq);
+    } else if (cur->id == OPEN_PAREN) {
+        token_queue_deq(tq);
+        node = parse_expr(tq);
+        if (!expect(tq, CLOSE_PAREN)) {
+            parser_error(")", token_queue_cur(tq));
+        }
+        token_queue_deq(tq);
+        return node;
+    } else {
+        node->type = EXPR_UNARY;
+        node->expr.unary_expr = parse_unary_expr(tq);
+    }
 
     return node;
 }
