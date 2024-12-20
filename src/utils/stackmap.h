@@ -13,3 +13,4 @@ typedef list(stackmap_node*) stackmap;
 stackmap* stackmap_init();
 int stackmap_getoffset(stackmap* sm, char* identifier);
 void stackmap_add(stackmap* sm, char* identifier, int size);
+int stackmap_size(stackmap* sm);

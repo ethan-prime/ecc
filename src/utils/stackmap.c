@@ -28,3 +28,14 @@ int stackmap_getoffset(stackmap* sm, char* identifier) {
     }
     return -1;
 }
+
+// returns size in bytes of the stackmap. (basically, how many bytes the function requires...)
+int stackmap_size(stackmap* sm) {
+    int offset = 0;
+    stackmap_node* node;
+    for(int i = 0; i < sm->len; i++) {
+        node = (stackmap_node*)list_get(sm, i);
+        offset += node->size;
+    }
+    return offset;
+}

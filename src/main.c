@@ -76,6 +76,7 @@ int main(int argc, char** argv) {
 
     asm_program_node* program_asm = ir_program_to_asm(program_ir);
     replace_pseudo_pass(program_asm);
+    pass2(program_asm);
 
     printf("Succesfully codegened to ASM...\n");
 

@@ -9,3 +9,9 @@
 void replace_pseudo_stack(stackmap* sm, operand_node* pseudo_node);
 void replace_pseudo_function(asm_function_node* function);
 void replace_pseudo_pass(asm_program_node* program);
+#define pass1(p) (replace_pseudo_pass(p))
+
+// add stackalloc
+void add_stackalloc_function_cleanup_mov_operands_function(asm_function_node* function);
+void add_stackalloc_function_cleanup_mov_operands(asm_program_node* program);
+#define pass2(p) (add_stackalloc_function_cleanup_mov_operands(p)) 

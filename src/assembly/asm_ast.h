@@ -1,6 +1,7 @@
 #include "../utils/utils_list.h"
 #include "../parser/parser.h"
 #include "../ir/ir.h"
+#include "../utils/stackmap.h"
 
 #pragma once
 
@@ -93,6 +94,7 @@ typedef struct asm_function_node
 {
     char *identifier;
     list(asm_instruction_node*)* instructions;
+    stackmap* sm;
 } asm_function_node;
 
 typedef struct asm_program_node

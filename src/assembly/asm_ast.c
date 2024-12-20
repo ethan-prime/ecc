@@ -113,6 +113,7 @@ asm_function_node* ir_function_to_asm(ir_function_node* function) {
         }
     }
     node->instructions = instrs;
+    node->sm = NULL; // stackmap is initially null, we set this later...
 
     return node;
 }
