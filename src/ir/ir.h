@@ -64,8 +64,8 @@ typedef struct
 
 typedef struct ir_function_node
 {
-    char *identifier;
-    list(ir_instruction_node *)* instructions;
+    char* identifier;
+    list(ir_instruction_node*)* instructions;
 } ir_function_node;
 
 typedef struct ir_program_node

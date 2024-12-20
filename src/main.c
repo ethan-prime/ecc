@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
     char* source_file = argv[1];
     char* stage = argv[2];
 
-    bool lex = false, parse = false, codegen = false;
+    bool lex = false, parse = false, tacky = false, codegen = false;
     
     if (argc > 2) {
         if (strcmp(stage, "--lex") == 0) {
@@ -31,6 +31,8 @@ int main(int argc, char** argv) {
             parse = true;
         } else if (strcmp(stage, "--codegen") == 0) {
             codegen = true;
+        } else if (strcmp(stage, "--tacky") == 0) {
+            tacky = true;
         } else {
             printf("invalid option: %s\n", stage);
             panic("fatal error");
@@ -67,12 +69,19 @@ int main(int argc, char** argv) {
     printf("Succesfully codegened to TAC...\n");
     ir_print_program(program_ir);
 
+    if (tacky) {
+        exit(0);
+    }
+
+    asm_program_node* program_asm = ir_program_to_asm(program_ir);
+
+    printf("Succesfully codegened to ASM...\n");
+
     if (codegen) {
         exit(0);
     }
 
-    /*
-    char* dest_file = (char*)malloc(sizeof((strlen(source_file)+1)*sizeof(char)));
+    /*char* dest_file = (char*)malloc(sizeof((strlen(source_file)+1)*sizeof(char)));
     strncpy(dest_file, source_file, strlen(source_file)-2);
     dest_file[strlen(source_file)-2] = '.';
     dest_file[strlen(source_file)-1] = 's';

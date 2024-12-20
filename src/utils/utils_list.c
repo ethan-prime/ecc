@@ -129,6 +129,12 @@ void *list_get(list *l, int pos)
 void list_concat(list *l1, list *l2)
 {
     list_node *curr = l1->head;
+
+    if (curr == NULL) {
+        l1->head = l2->head;
+        return;
+    }
+
     while (curr->next != NULL)
     {
         curr = curr->next;
