@@ -7,6 +7,7 @@
 #include "parser/parser.h"
 #include "assembly/asm_ast.h"
 #include "codegen/codegen.h"
+#include "ir/ir.h"
 
 void panic(char* msg) {
     printf("%s\n", msg);
@@ -61,14 +62,16 @@ int main(int argc, char** argv) {
         exit(0);
     }
 
-    /*asm_program_node* program_asm = program_to_asm(program);
+    ir_program_node* program_ir = program_to_ir(program);
 
-    printf("Succesfully codegened program...\n");
+    printf("Succesfully codegened to TAC...\n");
+    ir_print_program(program_ir);
 
     if (codegen) {
         exit(0);
     }
 
+    /*
     char* dest_file = (char*)malloc(sizeof((strlen(source_file)+1)*sizeof(char)));
     strncpy(dest_file, source_file, strlen(source_file)-2);
     dest_file[strlen(source_file)-2] = '.';

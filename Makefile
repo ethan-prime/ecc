@@ -6,7 +6,7 @@ OBJ = $(SRC:.c=.o)
 all: ecc
 
 ecc: $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $(OBJ)
+	$(CC) $(CFLAGS) -o $@ $(OBJ) -lm
 	rm -rf $(OBJ)
 
 clean:

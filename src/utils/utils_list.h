@@ -10,6 +10,8 @@ typedef struct list {
     int len;
 } list;
 
+#define list(t) list
+
 // inits a list and returns a ptr to it.
 list* list_init();
 
