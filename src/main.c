@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
         exit(0);
     }
 
-    /*char* dest_file = (char*)malloc(sizeof((strlen(source_file)+1)*sizeof(char)));
+    char* dest_file = (char*)malloc(sizeof((strlen(source_file)+1)*sizeof(char)));
     strncpy(dest_file, source_file, strlen(source_file)-2);
     dest_file[strlen(source_file)-2] = '.';
     dest_file[strlen(source_file)-1] = 's';
@@ -97,10 +97,11 @@ int main(int argc, char** argv) {
         panic("Error opening file");
     }
 
-    program_emit(file, program_asm);
+    emit_program(file, program_asm);
 
     fclose(file);
-    */
+
+    printf("Successfully compiled file!\n");
 
     return 0;
 }

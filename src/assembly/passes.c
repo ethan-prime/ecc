@@ -62,6 +62,7 @@ asm_instruction_node* asm_create_stackalloc_instr(int size) {
 
     asm_instruction_node* i = MALLOC(asm_instruction_node);
     i->type = INSTR_STACKALLOC;
+    i->instruction.stackalloc = node;
 
     return i;
 }
@@ -80,11 +81,23 @@ void add_stackalloc_function_cleanup_mov_operands_function(asm_function_node* fu
 
     asm_instruction_node* instr;
     // iterate through each instruction, replacing invalid stores with registers...
-    for (int i = 0; i < instrs->len; i++) {
-        //instr = (asm_instruction_node*)list_get(instrs, i);
-        // TODO: turn (mov mem, mem) -> (mov mem, reg; mov reg, mem)
+    int i = 0;
+    while (list_get(instrs, i) != NULL) {
+        instr = (asm_instruction_node*)list_get(instrs, i);
+        if (instr->type == INSTR_MOV) {
+            if (instr->instruction.mov->src->type == STACK && instr->instruction.mov->dest->type == STACK) {
+                // if both operands of a mov instruction are stack operands, we need to replace it with (mem->reg;reg->mem)
+                asm_instruction_node* mov1 = asm_create_move_instr(instr->instruction.mov->src, asm_create_register_operand(R10));
+                asm_instruction_node* mov2 = asm_create_move_instr(asm_create_register_operand(R10), instr->instruction.mov->dest);
+                
+                // replace the instruction with the new instructions
+                list_remove(instrs, i);
+                list_add(instrs, mov1, i);
+                list_add(instrs, mov2, ++i);
+            }
+        }
+        i++;
     }
-
 }
 
 void add_stackalloc_function_cleanup_mov_operands(asm_program_node* program) {

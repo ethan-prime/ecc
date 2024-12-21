@@ -132,6 +132,7 @@ void list_concat(list *l1, list *l2)
 
     if (curr == NULL) {
         l1->head = l2->head;
+        l1->len += l2->len;
         return;
     }
 
@@ -141,4 +142,5 @@ void list_concat(list *l1, list *l2)
     }
 
     curr->next = l2->head;
+    l1->len += l2->len;
 }

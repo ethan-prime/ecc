@@ -108,3 +108,10 @@ asm_function_node* ir_function_to_asm(ir_function_node* function);
 // instructions:
 list(asm_instruction_node*)* ir_unary_to_asm(ir_unary_node* stmt);
 list(asm_instruction_node*)* ir_return_to_asm(ir_return_node* ret);
+
+asm_instruction_node* asm_create_move_instr(operand_node* src, operand_node* dest);
+asm_instruction_node* asm_create_unary_instr(asm_unary_op op, operand_node* dest);
+asm_instruction_node* asm_create_ret_instr();
+operand_node* asm_create_register_operand(asm_register_t reg);
+asm_pseudo_node* asm_create_pseudo(char* identifier);
+asm_immediate_node* asm_create_immediate(int n);
