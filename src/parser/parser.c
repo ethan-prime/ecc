@@ -55,11 +55,26 @@ unary_node* parse_unary_expr(token_queue* tq) {
 
     token_queue_deq(tq);
 
-    node->expr = parse_expr(tq);
+    node->expr = parse_factor(tq);
     return node;
 }
 
-expr_node* parse_expr(token_queue* tq) {
+// creates and returns a binary expr node.
+expr_node* create_binary_expr(binary_op op, expr_node* lhs, expr_node* rhs) {
+    expr_node* node = MALLOC(expr_node);
+    node->type = EXPR_BINARY;
+
+    binary_node* binary_expr = MALLOC(binary_node);
+    binary_expr->lhs = lhs;
+    binary_expr->rhs = rhs;
+    binary_expr->op = op;
+
+    node->expr.binary_expr = binary_expr;
+
+    return node;
+}
+
+expr_node* parse_factor(token_queue* tq) {
     expr_node* node = MALLOC(expr_node);
 
     token* cur = token_queue_cur(tq);
@@ -69,7 +84,7 @@ expr_node* parse_expr(token_queue* tq) {
         node->expr.constant = parse_constant(tq);
     } else if (cur->id == OPEN_PAREN) {
         token_queue_deq(tq);
-        node = parse_expr(tq);
+        node = parse_expr(tq, 0); // start with a precedence of 0, include any operators
         if (!expect(tq, CLOSE_PAREN)) {
             parser_error(")", token_queue_cur(tq));
         }
@@ -83,6 +98,72 @@ expr_node* parse_expr(token_queue* tq) {
     return node;
 }
 
+int is_binary_op(token* tok) {
+    token_id id = tok->id;
+    if (id == PLUS || id == HYPHEN || id == ASTERISK || id == FORWARD_SLASH || id == PERCENT || id == PERCENT) {
+        return 1;
+    }
+    return 0;
+}
+
+binary_op parse_binop(token_queue* tq) {
+    binary_op op;
+    switch (token_queue_cur(tq)->id) {
+        case PLUS:
+            op = ADD;
+            break;
+        case HYPHEN:
+            op = SUBTRACT;
+            break;
+        case ASTERISK:
+            op = MULTIPLY;
+            break;
+        case FORWARD_SLASH:
+            op = DIVIDE;
+            break;
+        case PERCENT:
+            op = REMAINDER;
+            break;
+        default:
+            parser_error("a binary op", token_queue_cur(tq));
+    }
+    token_queue_deq(tq);
+    return op;
+}
+
+int precedence(token* tok) {
+    if (!is_binary_op(tok)) {
+        parser_error("a binary op (when getting precedence)", tok);
+    }
+    switch (tok->id) {
+        case PLUS:
+            return PREC_ADD;
+        case HYPHEN:
+            return PREC_SUBTRACT;
+        case ASTERISK:
+            return PREC_MULTIPLY;
+        case FORWARD_SLASH:
+            return PREC_DIVIDE;
+        case PERCENT:
+            return PREC_REMAINDER;
+        default:
+            return -1;
+    }
+}
+
+expr_node* parse_expr(token_queue* tq, int min_precedence) {
+    expr_node* lhs = parse_factor(tq);
+    token* cur = token_queue_cur(tq);
+    while (is_binary_op(cur) && precedence(cur) >= min_precedence) {
+        binary_op op = parse_binop(tq);
+        expr_node* rhs = parse_expr(tq, precedence(cur) + 1);
+        lhs = create_binary_expr(op, lhs, rhs);
+        cur = token_queue_cur(tq);
+    }
+
+    return lhs;
+}
+
 return_node* parse_return(token_queue* tq) {
     if (!expect(tq, KEYW_RETURN)) {
         parser_error("return", token_queue_cur(tq));
@@ -91,7 +172,7 @@ return_node* parse_return(token_queue* tq) {
 
     return_node* node = MALLOC(return_node);
 
-    node->expr = parse_expr(tq);
+    node->expr = parse_expr(tq, 0);
 
     if (!expect(tq, SEMICOLON)) {
         parser_error(";", token_queue_cur(tq));

@@ -18,8 +18,23 @@ typedef struct {
 } unary_node;
 
 typedef enum {
+    ADD,
+    SUBTRACT,
+    MULTIPLY,
+    DIVIDE,
+    REMAINDER
+} binary_op;
+
+typedef struct {
+    binary_op op;
+    struct expr_node* lhs;
+    struct expr_node* rhs;
+} binary_node;
+
+typedef enum {
     EXPR_CONSTANT,
     EXPR_UNARY,
+    EXPR_BINARY,
 } expr_type;
 
 typedef struct expr_node {
@@ -27,6 +42,7 @@ typedef struct expr_node {
     union {
         constant_node* constant;
         unary_node* unary_expr;
+        binary_node* binary_expr;
     } expr;
 } expr_node;
 

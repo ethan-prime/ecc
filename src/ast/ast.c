@@ -13,6 +13,20 @@ void print_constant(constant_node *constant) {
     printf("Constant(%d)\n", constant->val);
 }
 
+void print_binop(binary_op op) {
+    if (op == ADD) {
+        printf("+");
+    } else if (op == SUBTRACT) {
+        printf("-");
+    } else if (op == MULTIPLY) {
+        printf("*");
+    } else if (op == DIVIDE) {
+        printf("/");
+    } else if (op == REMAINDER) {
+        printf("%%");
+    }
+}
+
 void print_expr(expr_node *expr, int depth) {
     print_tabs(depth);
     if (expr->type == EXPR_CONSTANT) {
@@ -25,6 +39,14 @@ void print_expr(expr_node *expr, int depth) {
             printf("Negate,\n");
         }
         print_expr(expr->expr.unary_expr->expr, depth+1);
+        print_tabs(depth);
+        printf(")\n");
+    } else if (expr->type == EXPR_BINARY) {
+        printf("Binary(");
+        print_binop(expr->expr.binary_expr->op);
+        printf(",\n");
+        print_expr(expr->expr.binary_expr->lhs, depth+1);
+        print_expr(expr->expr.binary_expr->rhs, depth+1);
         print_tabs(depth);
         printf(")\n");
     }

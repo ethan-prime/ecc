@@ -10,8 +10,16 @@ int expect(token_queue* tq, token_id id);
 // parses and returns corresponding ast nodes
 constant_node* parse_constant(token_queue* tq);
 
+// precedence definitions for expr parsing
+#define PREC_ADD 100
+#define PREC_SUBTRACT 100
+#define PREC_MULTIPLY 200
+#define PREC_DIVIDE 200
+#define PREC_REMAINDER 200
+
 unary_node* parse_unary_expr(token_queue* tq);
-expr_node* parse_expr(token_queue* tq);
+expr_node* parse_factor(token_queue* tq);
+expr_node* parse_expr(token_queue* tq, int min_precedence);
 
 return_node* parse_return(token_queue* tq);
 
