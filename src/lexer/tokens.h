@@ -16,6 +16,10 @@ typedef enum {
     TILDE,
     HYPHEN,
     HYPHEN_HYPHEN,
+    PLUS,
+    ASTERISK,
+    FORWARD_SLASH,
+    PERCENT,
 } token_id;
 
 typedef union {

@@ -138,6 +138,18 @@ token* lexer_next_token(lexer_t* lexer) {
     } else if (lexer->cur_char == '~') {
         t->id = TILDE;
         lexer_read_char(lexer);
+    } else if (lexer->cur_char == '+') {
+        t->id = PLUS;
+        lexer_read_char(lexer);
+    } else if (lexer->cur_char == '*') {
+        t->id = ASTERISK;
+        lexer_read_char(lexer);
+    } else if (lexer->cur_char == '/') {
+        t->id = FORWARD_SLASH;
+        lexer_read_char(lexer);
+    } else if (lexer->cur_char == '%') {
+        t->id = PERCENT;
+        lexer_read_char(lexer);
     } else if (lexer->cur_char == '-') {
         lexer_read_char(lexer);
         if (lexer->cur_char == '-') {
@@ -182,7 +194,15 @@ void print_token(token t) {
         case HYPHEN_HYPHEN:
             printf("--"); break;
         case TILDE:
-            printf("~"); break;    
+            printf("~"); break;
+        case PLUS:
+            printf("+"); break;
+        case ASTERISK:
+            printf("*"); break;
+        case FORWARD_SLASH:
+            printf("/"); break;
+        case PERCENT:
+            printf("%%"); break;    
         default:
             printf("UNKNOWN TOKEN\n");
             exit(1);
