@@ -37,46 +37,81 @@ operand_node* ir_val_to_operand(ir_val_node* val) {
     }
     return node;
 }
+#define OPERAND(val) (ir_val_to_operand(val))
 
-asm_instruction_node* asm_create_move_instr(operand_node* src, operand_node* dest) {
+asm_i* asm_create_move_instr(operand_node* src, operand_node* dest) {
     asm_move_node* node = MALLOC(asm_move_node);
     node->src = src;
     node->dest = dest;
 
-    asm_instruction_node* mov = MALLOC(asm_instruction_node);
+    asm_i* mov = MALLOC(asm_i);
     mov->type = INSTR_MOV;
     mov->instruction.mov = node;
 
     return mov;
 }
 
-asm_instruction_node* asm_create_unary_instr(asm_unary_op op, operand_node* dest) {
+asm_i* asm_create_unary_instr(asm_unary_op op, operand_node* dest) {
     asm_unary_node* node = MALLOC(asm_unary_node);
     node->op = op;
     node->dest = dest;
 
-    asm_instruction_node* i = MALLOC(asm_instruction_node);
+    asm_i* i = MALLOC(asm_i);
     i->type = INSTR_UNARY;
     i->instruction.unary = node;
 
     return i;
 }
 
-asm_instruction_node* asm_create_ret_instr() {
-    asm_instruction_node* instr = MALLOC(asm_instruction_node);
+asm_i* asm_create_binary_instr(asm_binary_op op, operand_node* src, operand_node* dest) {
+    asm_binary_node* node = MALLOC(asm_binary_node);
+    node->op = op;
+    node->src = src;
+    node->dest = dest;
+
+    asm_i* i = MALLOC(asm_i);
+    i->type = INSTR_BINARY;
+    i->instruction.binary = node;
+
+    return i;
+}
+
+asm_i* asm_create_idiv_instr(operand_node* divisor) {
+    asm_idiv_node* node = MALLOC(asm_idiv_node);
+    node->divisor = divisor;
+
+    asm_i* i = MALLOC(asm_i);
+    i->type = INSTR_IDIV;
+    i->instruction.idiv = node;
+
+    return i;
+}
+
+asm_i* asm_create_ret_instr() {
+    asm_i* instr = MALLOC(asm_i);
     instr->type = INSTR_RET;
     return instr;
 }
 
-list(asm_instruction_node*)* ir_unary_to_asm(ir_unary_node* unary) {
-    list(asm_instruction_node*)* instrs = list_init();
-    asm_instruction_node* mov = asm_create_move_instr(ir_val_to_operand(unary->src), ir_val_to_operand(unary->dest));
-    asm_instruction_node* unary_;
-    if (unary->op == IR_COMPLEMENT) {
-        unary_ = asm_create_unary_instr(ASM_NOT, ir_val_to_operand(unary->dest));
+asm_i* asm_create_cdq_instr() {
+    asm_i* instr = MALLOC(asm_i);
+    instr->type = INSTR_CDQ;
+    return instr;
+}
+
+asm_unary_op ir_unary_op_to_asm_unary_op(ir_unary_op op) {
+    if (op == IR_COMPLEMENT) {
+        return ASM_NOT;
     } else {
-        unary_ = asm_create_unary_instr(ASM_NEG, ir_val_to_operand(unary->dest));
+        return ASM_NEG;
     }
+}
+#define ASM_UNARY_OP(op) (ir_unary_op_to_asm_unary_op(op))
+
+list(asm_i*)* ir_unary_to_asm(ir_unary_node* unary) {
+    list(asm_i*)* instrs = list_init();
+    asm_i* mov = asm_create_move_instr(OPERAND(unary->src), OPERAND(unary->dest));
+    asm_i* unary_ = asm_create_unary_instr(ASM_UNARY_OP(unary->op), OPERAND(unary->dest));
 
     list_append(instrs, (void*)mov);
     list_append(instrs, (void*)unary_);
@@ -84,10 +119,71 @@ list(asm_instruction_node*)* ir_unary_to_asm(ir_unary_node* unary) {
     return instrs;
 }
 
-list(asm_instruction_node*)* ir_return_to_asm(ir_return_node* ret) {
-    list(asm_instruction_node*)* instrs = list_init();
-    asm_instruction_node* mov = asm_create_move_instr(ir_val_to_operand(ret->val), asm_create_register_operand(AX));
-    asm_instruction_node* ret_ = asm_create_ret_instr();
+asm_binary_op ir_binary_op_to_asm_binary_op(ir_binary_op op) {
+    if (op == IR_ADD) {
+        return ASM_ADD;
+    } else if (op == IR_SUBTRACT) {
+        return ASM_SUB;
+    } else {
+        return ASM_MULT;
+    }
+}
+#define ASM_BINARY_OP(op) (ir_binary_op_to_asm_binary_op(op))
+
+list(asm_i*)* ir_div_to_asm(ir_binary_node* binary) {
+    list(asm_i*)* instrs = list_init();
+    asm_i* mov1 = asm_create_move_instr(OPERAND(binary->src1), REGISTER(AX));
+    asm_i* cdq = asm_create_cdq_instr();
+    asm_i* idiv = asm_create_idiv_instr(OPERAND(binary->src2));
+    asm_i* mov2 = asm_create_move_instr(REGISTER(AX), OPERAND(binary->dest));
+
+    list_append(instrs, (void*)mov1);
+    list_append(instrs, (void*)cdq);
+    list_append(instrs, (void*)idiv);
+    list_append(instrs, (void*)mov2);
+
+    return instrs;
+}
+
+list(asm_i*)* ir_remainder_to_asm(ir_binary_node* binary) {
+    list(asm_i*)* instrs = list_init();
+    asm_i* mov1 = asm_create_move_instr(OPERAND(binary->src1), REGISTER(AX));
+    asm_i* cdq = asm_create_cdq_instr();
+    asm_i* idiv = asm_create_idiv_instr(OPERAND(binary->src2));
+    asm_i* mov2 = asm_create_move_instr(REGISTER(DX), OPERAND(binary->dest)); // one difference from div instruction!
+
+    list_append(instrs, (void*)mov1);
+    list_append(instrs, (void*)cdq);
+    list_append(instrs, (void*)idiv);
+    list_append(instrs, (void*)mov2);
+
+    return instrs;
+}
+
+list(asm_i*)* ir_binary_to_asm(ir_binary_node* binary) {
+    // divide instructions are weird in x86... we need 
+    // to convert them differently.
+    if (binary->op == IR_DIVIDE) {
+        return ir_div_to_asm(binary);
+    } else if (binary->op == IR_REMAINDER) {
+        return ir_remainder_to_asm(binary);
+    }
+
+    // for add, mult, and sub:
+    list(asm_i*)* instrs = list_init();
+    asm_i* mov = asm_create_move_instr(OPERAND(binary->src1), OPERAND(binary->dest));
+    asm_i* binary_ = asm_create_binary_instr(ASM_BINARY_OP(binary->op), OPERAND(binary->src2), OPERAND(binary->dest));
+
+    list_append(instrs, (void*)mov);
+    list_append(instrs, (void*)binary_);
+
+    return instrs;
+}
+
+list(asm_i*)* ir_return_to_asm(ir_return_node* ret) {
+    list(asm_i*)* instrs = list_init();
+    asm_i* mov = asm_create_move_instr(OPERAND(ret->val), asm_create_register_operand(AX));
+    asm_i* ret_ = asm_create_ret_instr();
 
     // add instructions to instructions list
     list_append(instrs, (void*)mov);
@@ -100,7 +196,7 @@ asm_function_node* ir_function_to_asm(ir_function_node* function) {
     asm_function_node* node = MALLOC(asm_function_node);
     node->identifier = function->identifier;
     
-    list(asm_instruction_node*)* instrs = list_init();
+    list(asm_i*)* instrs = list_init();
     for(int i = 0; i < function->instructions->len; i++) {
         ir_instruction_node* instr = (ir_instruction_node*)list_get(function->instructions, i);
         switch (instr->type) {
@@ -109,6 +205,9 @@ asm_function_node* ir_function_to_asm(ir_function_node* function) {
                 break;
             case IR_INSTR_RET:
                 list_concat(instrs, ir_return_to_asm(instr->instruction.ret));
+                break;
+            case IR_INSTR_BINARY:
+                list_concat(instrs, ir_binary_to_asm(instr->instruction.binary));
                 break;
         }
     }

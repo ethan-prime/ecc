@@ -123,6 +123,8 @@ ir_val_node* expr_to_ir(expr_node* expr, list(ir_instruction_node *)* instructio
 
         return dest;
     }
+    // invalid instruction, unreachable...
+    return NULL;
 }
 
 // STATEMENTS:
