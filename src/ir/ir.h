@@ -42,6 +42,21 @@ typedef struct
     ir_val_node* dest;
 } ir_unary_node;
 
+typedef enum {
+    IR_ADD,
+    IR_SUBTRACT,
+    IR_MULTIPLY,
+    IR_DIVIDE,
+    IR_REMAINDER,
+} ir_binary_op;
+
+typedef struct {
+    ir_binary_op op;
+    ir_val_node* src1;
+    ir_val_node* src2;
+    ir_val_node* dest;
+} ir_binary_node;
+
 typedef struct {
     ir_val_node* val;
 } ir_return_node;
