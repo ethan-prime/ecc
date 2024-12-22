@@ -34,7 +34,7 @@ void print_expr(expr_node *expr, int depth) {
     } else if (expr->type == EXPR_UNARY) {
         printf("Unary(");
         if (expr->expr.unary_expr->op == COMPLEMENT) {
-            printf("Complement,\n");
+            printf("~,\n");
         } else if (expr->expr.unary_expr->op == NEGATE) {
             printf("Negate,\n");
         }
