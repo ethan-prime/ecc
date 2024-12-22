@@ -65,6 +65,7 @@ typedef enum
 {
     IR_INSTR_RET,
     IR_INSTR_UNARY,
+    IR_INSTR_BINARY,
 } ir_instruction_type;
 
 typedef struct
@@ -74,6 +75,7 @@ typedef struct
     {
         ir_return_node* ret;
         ir_unary_node* unary;
+        ir_binary_node* binary;
     } instruction;
 } ir_instruction_node;
 

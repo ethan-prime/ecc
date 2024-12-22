@@ -17,13 +17,34 @@ void ir_print_return(ir_return_node *ret) {
 void ir_print_unary(ir_unary_node* unary) {
     printf("Unary(");
     if (unary->op == IR_COMPLEMENT) {
-        printf("Complement, ");
+        printf("~, ");
     } else if (unary->op == IR_NEGATE) {
-        printf("Negate, ");
+        printf("-, ");
     }
     ir_print_val(unary->src);
     printf(", ");
     ir_print_val(unary->dest);
+    printf(")\n");
+}
+
+void ir_print_binary(ir_binary_node* binary) {
+    printf("Binary(");
+    if (binary->op == IR_ADD) {
+        printf("+, ");
+    } else if (binary->op == IR_SUBTRACT) {
+        printf("-, ");
+    } else if (binary->op == IR_MULTIPLY) {
+        printf("*, ");
+    } else if (binary->op == IR_DIVIDE) {
+        printf("/, ");
+    } else if (binary->op == IR_REMAINDER) {
+        printf("%%, ");
+    }
+    ir_print_val(binary->src1);
+    printf(", ");
+    ir_print_val(binary->src2);
+    printf(", ");
+    ir_print_val(binary->dest);
     printf(")\n");
 }
 
@@ -34,6 +55,8 @@ void ir_print_instructions(list(ir_instruction_node)* instrs) {
             ir_print_return(instr->instruction.ret);
         } else if (instr->type == IR_INSTR_UNARY) {
             ir_print_unary(instr->instruction.unary);
+        } else if (instr->type == IR_INSTR_BINARY) {
+            ir_print_binary(instr->instruction.binary);
         }
     }
 }

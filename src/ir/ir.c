@@ -48,6 +48,15 @@ ir_unary_node* ir_create_unary_node(ir_unary_op op, ir_val_node* src, ir_val_nod
     return node;
 }
 
+ir_binary_node* ir_create_binary_node(ir_binary_op op, ir_val_node* src1, ir_val_node* src2, ir_val_node* dest) {
+    ir_binary_node* node = MALLOC(ir_binary_node);
+    node->op = op;
+    node->src1 = src1;
+    node->src2 = src2;
+    node->dest = dest;
+    return node;
+}
+
 ir_return_node* ir_create_return_node(ir_val_node* val) {
     ir_return_node* node = MALLOC(ir_return_node);
     node->val = val;
@@ -62,29 +71,57 @@ ir_unary_op unary_op_to_ir(unary_op op) {
     }
 }
 
+ir_binary_op binary_op_to_ir(binary_op op) {
+    if (op == ADD) {
+        return IR_ADD;
+    } else if (op == SUBTRACT) {
+        return IR_SUBTRACT;
+    } else if (op == MULTIPLY) {
+        return IR_MULTIPLY;
+    } else if (op == DIVIDE) {
+        return IR_DIVIDE;
+    } else {
+        return IR_REMAINDER;
+    }
+}
+
 // appends instructions to generate expr -> ir, returns ir_val_node with DEST ir val.
 ir_val_node* expr_to_ir(expr_node* expr, list(ir_instruction_node *)* instructions) {
-    switch (expr->type) {
-        case EXPR_CONSTANT:
-            ir_val_node* val = MALLOC(ir_val_node);
-            val->type = IR_CONSTANT;
-            val->val.constant = ir_create_constant(expr->expr.constant->val);
-            return val;
-        case EXPR_UNARY:
-            // process inner expr, add instructions to expression. get src name
-            ir_val_node* src = expr_to_ir(expr->expr.unary_expr->expr, instructions);
-            // create new dest variable.
-            char* dest_name = ir_make_temp_var();
-            ir_val_node* dest = ir_create_var(dest_name);
-            // create new Unary TAC instruction.
-            ir_unary_op op = unary_op_to_ir(expr->expr.unary_expr->op);
-            ir_instruction_node* unary_instr = MALLOC(ir_instruction_node);
-            unary_instr->type = IR_INSTR_UNARY;
-            unary_instr->instruction.unary = ir_create_unary_node(op, src, dest);
-            // add instructions to the list...
-            list_append(instructions, (void*)unary_instr);
-            // return destination val node so we can use the result.
-            return dest;
+    if (expr->type == EXPR_CONSTANT) {
+        ir_val_node* val = MALLOC(ir_val_node);
+        val->type = IR_CONSTANT;
+        val->val.constant = ir_create_constant(expr->expr.constant->val);
+        return val;
+    } else if (expr->type == EXPR_UNARY) {
+        // process inner expr, add instructions to expression. get src name
+        ir_val_node* src = expr_to_ir(expr->expr.unary_expr->expr, instructions);
+        // create new dest variable.
+        char* dest_name = ir_make_temp_var();
+        ir_val_node* dest = ir_create_var(dest_name);
+        // create new Unary TAC instruction.
+        ir_unary_op op = unary_op_to_ir(expr->expr.unary_expr->op);
+        ir_instruction_node* unary_instr = MALLOC(ir_instruction_node);
+        unary_instr->type = IR_INSTR_UNARY;
+        unary_instr->instruction.unary = ir_create_unary_node(op, src, dest);
+        // add instructions to the list...
+        list_append(instructions, (void*)unary_instr);
+        // return destination val node so we can use the result.
+        return dest;
+    } else if (expr->type == EXPR_BINARY) {
+        ir_val_node* src1 = expr_to_ir(expr->expr.binary_expr->lhs, instructions);
+        ir_val_node* src2 = expr_to_ir(expr->expr.binary_expr->rhs, instructions);
+        char* dest_name = ir_make_temp_var();
+        ir_val_node* dest = ir_create_var(dest_name);
+        ir_binary_op op = binary_op_to_ir(expr->expr.binary_expr->op);
+
+        ir_instruction_node* binary_instr = MALLOC(ir_instruction_node);
+        binary_instr->type = IR_INSTR_BINARY;
+        binary_instr->instruction.binary = ir_create_binary_node(op, src1, src2, dest);
+
+        // add binary expression to instructions
+        list_append(instructions, (void*)binary_instr);
+
+        return dest;
     }
 }
 
