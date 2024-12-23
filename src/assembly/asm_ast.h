@@ -15,6 +15,7 @@ typedef struct
 
 typedef enum {
     AX,
+    CL,
     DX,
     R10,
     R11,
@@ -53,10 +54,16 @@ typedef struct
     } operand;
 } operand_node;
 
+typedef enum {
+    ASM_LONG,
+    ASM_BYTE,
+} mov_size;
+
 typedef struct
 {
     operand_node* src;
     operand_node* dest;
+    mov_size size;
 } asm_move_node;
 
 typedef struct {
@@ -141,7 +148,7 @@ list(asm_i*)* ir_binary_to_asm(ir_binary_node* binary);
 list(asm_i*)* ir_return_to_asm(ir_return_node* ret);
 
 asm_i* asm_create_idiv_instr(operand_node* divisor);
-asm_i* asm_create_move_instr(operand_node* src, operand_node* dest);
+asm_i* asm_create_move_instr(mov_size size, operand_node* src, operand_node* dest);
 asm_i* asm_create_unary_instr(asm_unary_op op, operand_node* dest);
 asm_i* asm_create_binary_instr(asm_binary_op op, operand_node* src, operand_node* dest);
 asm_i* asm_create_ret_instr();

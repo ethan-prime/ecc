@@ -13,6 +13,9 @@ void emit_register(FILE* file, asm_register_t reg) {
         case DX:
             fprintf(file, "%%edx");
             break;
+        case CL:
+            fprintf(file, "%%cl");
+            break;
         case R10:
             fprintf(file, "%%r10d");
             break;
@@ -38,7 +41,15 @@ void emit_operand(FILE* file, operand_node* op) {
 }
 
 void emit_mov_instr(FILE* file, asm_move_node* mov) {
-    fprintf(file, "\tmovl ");
+    fprintf(file, "\tmov");
+    switch (mov->size) {
+        case ASM_LONG:
+            fprintf(file, "l ");
+            break;
+        case ASM_BYTE:
+            fprintf(file, "b ");
+            break;
+    }
     emit_operand(file, mov->src);
     fprintf(file, ", ");
     emit_operand(file, mov->dest);
@@ -83,6 +94,12 @@ void emit_binary_op(FILE* file, asm_binary_op op) {
             break;
         case ASM_XOR:
             fprintf(file, "xor");
+            break;
+        case ASM_LEFT_SHIFT:
+            fprintf(file, "shll");
+            break;
+        case ASM_RIGHT_SHIFT:
+            fprintf(file, "shrl");
             break;
         default:
             break;

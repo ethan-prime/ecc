@@ -1,3 +1,3 @@
 int main() {
-    return 3*5+2 & 1;
+    return (2*3)-4 << (1+1) | 2;
 }

@@ -86,8 +86,8 @@ void add_stackalloc_function_cleanup_operands_function(asm_function_node* functi
         if (instr->type == INSTR_MOV) {
             if (instr->instruction.mov->src->type == STACK && instr->instruction.mov->dest->type == STACK) {
                 // if both operands of a mov instruction are stack operands, we need to replace it with (mem->reg;reg->mem)
-                asm_i* mov1 = asm_create_move_instr(instr->instruction.mov->src, REGISTER(R10));
-                asm_i* mov2 = asm_create_move_instr(REGISTER(R10), instr->instruction.mov->dest);
+                asm_i* mov1 = asm_create_move_instr(ASM_LONG, instr->instruction.mov->src, REGISTER(R10));
+                asm_i* mov2 = asm_create_move_instr(ASM_LONG, REGISTER(R10), instr->instruction.mov->dest);
                 
                 // replace the instruction with the new instructions
                 list_remove(instrs, i);
@@ -97,7 +97,7 @@ void add_stackalloc_function_cleanup_operands_function(asm_function_node* functi
         } else if (instr->type == INSTR_IDIV) {
             // if we have idiv $x, for example...
             if (instr->instruction.idiv->divisor->type == IMM) {
-                asm_i* mov = asm_create_move_instr(instr->instruction.idiv->divisor, REGISTER(R10));
+                asm_i* mov = asm_create_move_instr(ASM_LONG, instr->instruction.idiv->divisor, REGISTER(R10));
                 asm_i* idiv = asm_create_idiv_instr(REGISTER(R10));
 
                 list_remove(instrs, i);
@@ -109,7 +109,7 @@ void add_stackalloc_function_cleanup_operands_function(asm_function_node* functi
             asm_binary_op op = instr->instruction.binary->op;
             if (op == ASM_ADD || op == ASM_SUB || op == ASM_AND || op == ASM_OR || op == ASM_XOR) {
                 // addl stack, stack -> movl stack, reg; addl reg, stack
-                asm_i* mov = asm_create_move_instr(instr->instruction.binary->src, REGISTER(R10));
+                asm_i* mov = asm_create_move_instr(ASM_LONG, instr->instruction.binary->src, REGISTER(R10));
                 asm_i* binary = asm_create_binary_instr(instr->instruction.binary->op, REGISTER(R10), instr->instruction.binary->dest);
             
                 list_remove(instrs, i);
@@ -119,9 +119,9 @@ void add_stackalloc_function_cleanup_operands_function(asm_function_node* functi
             } else if (op == ASM_MULT) {
                 // imull. dest must be register.
                 // imull X, stack -> movl stack, reg; imull X, reg; movl reg, stack
-                asm_i* mov1 = asm_create_move_instr(instr->instruction.binary->dest, REGISTER(R11));
+                asm_i* mov1 = asm_create_move_instr(ASM_LONG, instr->instruction.binary->dest, REGISTER(R11));
                 asm_i* imull = asm_create_binary_instr(ASM_MULT, instr->instruction.binary->src, REGISTER(R11));
-                asm_i* mov2 = asm_create_move_instr(REGISTER(R11), instr->instruction.binary->dest);
+                asm_i* mov2 = asm_create_move_instr(ASM_LONG, REGISTER(R11), instr->instruction.binary->dest);
             
                 list_remove(instrs, i);
                 list_add(instrs, (void*)mov1, i);

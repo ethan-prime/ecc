@@ -39,10 +39,11 @@ operand_node* ir_val_to_operand(ir_val_node* val) {
 }
 #define OPERAND(val) (ir_val_to_operand(val))
 
-asm_i* asm_create_move_instr(operand_node* src, operand_node* dest) {
+asm_i* asm_create_move_instr(mov_size size, operand_node* src, operand_node* dest) {
     asm_move_node* node = MALLOC(asm_move_node);
     node->src = src;
     node->dest = dest;
+    node->size = size;
 
     asm_i* mov = MALLOC(asm_i);
     mov->type = INSTR_MOV;
@@ -110,7 +111,7 @@ asm_unary_op ir_unary_op_to_asm_unary_op(ir_unary_op op) {
 
 list(asm_i*)* ir_unary_to_asm(ir_unary_node* unary) {
     list(asm_i*)* instrs = list_init();
-    asm_i* mov = asm_create_move_instr(OPERAND(unary->src), OPERAND(unary->dest));
+    asm_i* mov = asm_create_move_instr(ASM_LONG, OPERAND(unary->src), OPERAND(unary->dest));
     asm_i* unary_ = asm_create_unary_instr(ASM_UNARY_OP(unary->op), OPERAND(unary->dest));
 
     list_append(instrs, (void*)mov);
@@ -142,10 +143,10 @@ asm_binary_op ir_binary_op_to_asm_binary_op(ir_binary_op op) {
 
 list(asm_i*)* ir_div_to_asm(ir_binary_node* binary) {
     list(asm_i*)* instrs = list_init();
-    asm_i* mov1 = asm_create_move_instr(OPERAND(binary->src1), REGISTER(AX));
+    asm_i* mov1 = asm_create_move_instr(ASM_LONG, OPERAND(binary->src1), REGISTER(AX));
     asm_i* cdq = asm_create_cdq_instr();
     asm_i* idiv = asm_create_idiv_instr(OPERAND(binary->src2));
-    asm_i* mov2 = asm_create_move_instr(REGISTER(AX), OPERAND(binary->dest));
+    asm_i* mov2 = asm_create_move_instr(ASM_LONG, REGISTER(AX), OPERAND(binary->dest));
 
     list_append(instrs, (void*)mov1);
     list_append(instrs, (void*)cdq);
@@ -157,15 +158,30 @@ list(asm_i*)* ir_div_to_asm(ir_binary_node* binary) {
 
 list(asm_i*)* ir_remainder_to_asm(ir_binary_node* binary) {
     list(asm_i*)* instrs = list_init();
-    asm_i* mov1 = asm_create_move_instr(OPERAND(binary->src1), REGISTER(AX));
+    asm_i* mov1 = asm_create_move_instr(ASM_LONG, OPERAND(binary->src1), REGISTER(AX));
     asm_i* cdq = asm_create_cdq_instr();
     asm_i* idiv = asm_create_idiv_instr(OPERAND(binary->src2));
-    asm_i* mov2 = asm_create_move_instr(REGISTER(DX), OPERAND(binary->dest)); // one difference from div instruction!
+    asm_i* mov2 = asm_create_move_instr(ASM_LONG, REGISTER(DX), OPERAND(binary->dest)); // one difference from div instruction!
 
     list_append(instrs, (void*)mov1);
     list_append(instrs, (void*)cdq);
     list_append(instrs, (void*)idiv);
     list_append(instrs, (void*)mov2);
+
+    return instrs;
+}
+
+list(asm_i*)* ir_shift_to_asm(ir_binary_node* binary) {
+    list(asm_i*)* instrs = list_init();
+    // move "src" operand to dest. so, for Binary(%1, %2, %3), this does movl %1, %3
+    asm_i* mov1 = asm_create_move_instr(ASM_LONG, OPERAND(binary->src1), OPERAND(binary->dest));
+    // movb %2, %cl
+    asm_i* mov2 = asm_create_move_instr(ASM_BYTE, OPERAND(binary->src2), REGISTER(CL));
+    asm_i* binary_ = asm_create_binary_instr(ASM_BINARY_OP(binary->op), REGISTER(CL), OPERAND(binary->dest));
+
+    list_append(instrs, (void*)mov1);
+    list_append(instrs, (void*)mov2);
+    list_append(instrs, (void*)binary_);
 
     return instrs;
 }
@@ -177,11 +193,13 @@ list(asm_i*)* ir_binary_to_asm(ir_binary_node* binary) {
         return ir_div_to_asm(binary);
     } else if (binary->op == IR_REMAINDER) {
         return ir_remainder_to_asm(binary);
+    } else if (binary->op == IR_BITWISE_LEFT_SHIFT || binary->op == IR_BITWISE_RIGHT_SHIFT) {
+        return ir_shift_to_asm(binary);
     }
 
     // for add, mult, and sub:
     list(asm_i*)* instrs = list_init();
-    asm_i* mov = asm_create_move_instr(OPERAND(binary->src1), OPERAND(binary->dest));
+    asm_i* mov = asm_create_move_instr(ASM_LONG, OPERAND(binary->src1), OPERAND(binary->dest));
     asm_i* binary_ = asm_create_binary_instr(ASM_BINARY_OP(binary->op), OPERAND(binary->src2), OPERAND(binary->dest));
 
     list_append(instrs, (void*)mov);
@@ -192,7 +210,7 @@ list(asm_i*)* ir_binary_to_asm(ir_binary_node* binary) {
 
 list(asm_i*)* ir_return_to_asm(ir_return_node* ret) {
     list(asm_i*)* instrs = list_init();
-    asm_i* mov = asm_create_move_instr(OPERAND(ret->val), asm_create_register_operand(AX));
+    asm_i* mov = asm_create_move_instr(ASM_LONG, OPERAND(ret->val), asm_create_register_operand(AX));
     asm_i* ret_ = asm_create_ret_instr();
 
     // add instructions to instructions list
