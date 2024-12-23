@@ -34,7 +34,7 @@ main:
 	movl -16(%rbp), %r10d
 	movl %r10d, -20(%rbp)
 	movl $2, %r10d
-	or %r10d, -20(%rbp)
+	orl %r10d, -20(%rbp)
 	movl -20(%rbp), %eax
 	movq %rbp, %rsp
 	popq %rbp
