@@ -100,7 +100,7 @@ expr_node* parse_factor(token_queue* tq) {
 
 int is_binary_op(token* tok) {
     token_id id = tok->id;
-    if (id == PLUS || id == HYPHEN || id == ASTERISK || id == FORWARD_SLASH || id == PERCENT || id == PERCENT) {
+    if (id == PLUS || id == HYPHEN || id == ASTERISK || id == FORWARD_SLASH || id == PERCENT || id == PERCENT || id == AMPERSAND || id == PIPE || id == CARAT || id == LEFT_SHIFT || id == RIGHT_SHIFT) {
         return 1;
     }
     return 0;
@@ -124,6 +124,21 @@ binary_op parse_binop(token_queue* tq) {
         case PERCENT:
             op = REMAINDER;
             break;
+        case AMPERSAND:
+            op = BITWISE_AND;
+            break;
+        case PIPE:
+            op = BITWISE_OR;
+            break;
+        case CARAT:
+            op = BITWISE_XOR;
+            break;
+        case LEFT_SHIFT:
+            op = BITWISE_LEFT_SHIFT;
+            break;
+        case RIGHT_SHIFT:
+            op = BITWISE_RIGHT_SHIFT;
+            break;
         default:
             parser_error("a binary op", token_queue_cur(tq));
     }
@@ -146,6 +161,16 @@ int precedence(token* tok) {
             return PREC_DIVIDE;
         case PERCENT:
             return PREC_REMAINDER;
+        case AMPERSAND:
+            return PREC_BITWISE_AND;
+        case PIPE:
+            return PREC_BITWISE_OR;
+        case CARAT:
+            return PREC_BITWISE_XOR;
+        case LEFT_SHIFT:
+            return PREC_LEFT_SHIFT;
+        case RIGHT_SHIFT:
+            return PREC_RIGHT_SHIFT;
         default:
             return -1;
     }

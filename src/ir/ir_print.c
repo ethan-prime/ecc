@@ -39,6 +39,16 @@ void ir_print_binary(ir_binary_node* binary) {
         printf("/, ");
     } else if (binary->op == IR_REMAINDER) {
         printf("%%, ");
+    } else if (binary->op == IR_BITWISE_AND) {
+        printf("&, ");
+    } else if (binary->op == IR_BITWISE_OR) {
+        printf("|, ");
+    } else if (binary->op == IR_BITWISE_XOR) {
+        printf("^, ");
+    } else if (binary->op == IR_BITWISE_LEFT_SHIFT) {
+        printf("<<, ");
+    } else if (binary->op == IR_BITWISE_RIGHT_SHIFT) {
+        printf(">>, ");
     }
     ir_print_val(binary->src1);
     printf(", ");

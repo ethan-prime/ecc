@@ -80,8 +80,18 @@ ir_binary_op binary_op_to_ir(binary_op op) {
         return IR_MULTIPLY;
     } else if (op == DIVIDE) {
         return IR_DIVIDE;
-    } else {
+    } else if (op == REMAINDER) {
         return IR_REMAINDER;
+    } else if (op == BITWISE_AND) {
+        return IR_BITWISE_AND;
+    } else if (op == BITWISE_OR) {
+        return IR_BITWISE_OR;
+    } else if (op == BITWISE_XOR) {
+        return IR_BITWISE_XOR;
+    } else if (op == BITWISE_LEFT_SHIFT) {
+        return IR_BITWISE_LEFT_SHIFT;
+    } else {
+        return IR_BITWISE_RIGHT_SHIFT;
     }
 }
 

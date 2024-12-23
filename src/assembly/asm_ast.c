@@ -124,8 +124,18 @@ asm_binary_op ir_binary_op_to_asm_binary_op(ir_binary_op op) {
         return ASM_ADD;
     } else if (op == IR_SUBTRACT) {
         return ASM_SUB;
-    } else {
+    } else if (op == IR_MULTIPLY) {
         return ASM_MULT;
+    } else if (op == IR_BITWISE_AND) {
+        return ASM_AND;
+    } else if (op == IR_BITWISE_OR) {
+        return ASM_OR;
+    } else if (op == IR_BITWISE_XOR) {
+        return ASM_XOR;
+    } else if (op == IR_BITWISE_LEFT_SHIFT) {
+        return ASM_LEFT_SHIFT;
+    } else /*if (op == IR_BITWISE_RIGHT_SHIFT)*/ {
+        return ASM_RIGHT_SHIFT;
     }
 }
 #define ASM_BINARY_OP(op) (ir_binary_op_to_asm_binary_op(op))

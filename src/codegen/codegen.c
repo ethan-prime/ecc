@@ -74,6 +74,16 @@ void emit_binary_op(FILE* file, asm_binary_op op) {
             break;
         case ASM_MULT:
             fprintf(file, "imull");
+            break;
+        case ASM_AND:
+            fprintf(file, "and");
+            break;
+        case ASM_OR:
+            fprintf(file, "or");
+            break;
+        case ASM_XOR:
+            fprintf(file, "xor");
+            break;
         default:
             break;
     }

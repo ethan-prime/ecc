@@ -20,6 +20,13 @@ typedef enum {
     ASTERISK,
     FORWARD_SLASH,
     PERCENT,
+    AMPERSAND,
+    PIPE,
+    CARAT,
+    LESS_THAN,
+    GREATER_THAN,
+    LEFT_SHIFT,
+    RIGHT_SHIFT,
 } token_id;
 
 typedef union {

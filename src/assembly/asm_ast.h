@@ -77,6 +77,11 @@ typedef enum {
     ASM_ADD,
     ASM_SUB,
     ASM_MULT,
+    ASM_AND,
+    ASM_OR,
+    ASM_XOR,
+    ASM_LEFT_SHIFT,
+    ASM_RIGHT_SHIFT,
 } asm_binary_op;
 
 typedef struct {

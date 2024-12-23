@@ -24,6 +24,16 @@ void print_binop(binary_op op) {
         printf("/");
     } else if (op == REMAINDER) {
         printf("%%");
+    } else if (op == BITWISE_AND) {
+        printf("&");
+    } else if (op == BITWISE_OR) {
+        printf("|");
+    } else if (op == BITWISE_XOR) {
+        printf("^");
+    } else if (op == BITWISE_LEFT_SHIFT) {
+        printf("<<");
+    } else if (op == BITWISE_RIGHT_SHIFT) {
+        printf(">>");
     }
 }
 

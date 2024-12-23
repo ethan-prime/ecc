@@ -150,6 +150,31 @@ token* lexer_next_token(lexer_t* lexer) {
     } else if (lexer->cur_char == '%') {
         t->id = PERCENT;
         lexer_read_char(lexer);
+    } else if (lexer->cur_char == '&') {
+        t->id = AMPERSAND;
+        lexer_read_char(lexer);
+    } else if (lexer->cur_char == '|') {
+        t->id = PIPE;
+        lexer_read_char(lexer);
+    } else if (lexer->cur_char == '^') {
+        t->id = CARAT;
+        lexer_read_char(lexer);
+    } else if (lexer->cur_char == '<') {
+        lexer_read_char(lexer);
+        if (lexer->cur_char == '<') {
+            t->id = LEFT_SHIFT;
+            lexer_read_char(lexer);
+        } else {
+            t->id = LESS_THAN;
+        }
+    } else if (lexer->cur_char == '>') {
+        lexer_read_char(lexer);
+        if (lexer->cur_char == '>') {
+            t->id = RIGHT_SHIFT;
+            lexer_read_char(lexer);
+        } else {
+            t->id = GREATER_THAN;
+        }
     } else if (lexer->cur_char == '-') {
         lexer_read_char(lexer);
         if (lexer->cur_char == '-') {
@@ -202,7 +227,21 @@ void print_token(token t) {
         case FORWARD_SLASH:
             printf("/"); break;
         case PERCENT:
-            printf("%%"); break;    
+            printf("%%"); break;
+        case AMPERSAND:
+            printf("&"); break;
+        case PIPE:
+            printf("|"); break; 
+        case CARAT:
+            printf("^"); break; 
+        case LESS_THAN:
+            printf("<"); break;
+        case GREATER_THAN:
+            printf(">"); break;
+        case LEFT_SHIFT:
+            printf("<<"); break;
+        case RIGHT_SHIFT:
+            printf(">>"); break;     
         default:
             printf("UNKNOWN TOKEN\n");
             exit(1);

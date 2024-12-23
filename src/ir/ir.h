@@ -48,6 +48,11 @@ typedef enum {
     IR_MULTIPLY,
     IR_DIVIDE,
     IR_REMAINDER,
+    IR_BITWISE_AND,
+    IR_BITWISE_OR,
+    IR_BITWISE_XOR,
+    IR_BITWISE_LEFT_SHIFT,
+    IR_BITWISE_RIGHT_SHIFT,
 } ir_binary_op;
 
 typedef struct {

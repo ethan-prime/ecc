@@ -22,7 +22,12 @@ typedef enum {
     SUBTRACT,
     MULTIPLY,
     DIVIDE,
-    REMAINDER
+    REMAINDER,
+    BITWISE_AND,
+    BITWISE_OR,
+    BITWISE_XOR,
+    BITWISE_LEFT_SHIFT,
+    BITWISE_RIGHT_SHIFT,
 } binary_op;
 
 typedef struct {
