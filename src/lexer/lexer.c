@@ -151,11 +151,21 @@ token* lexer_next_token(lexer_t* lexer) {
         t->id = PERCENT;
         lexer_read_char(lexer);
     } else if (lexer->cur_char == '&') {
-        t->id = AMPERSAND;
         lexer_read_char(lexer);
+        if (lexer->cur_char == '&') {
+            t->id = AMPERSAND_AMPERSAND;
+            lexer_read_char(lexer);
+        } else {
+            t->id = AMPERSAND;
+        }
     } else if (lexer->cur_char == '|') {
-        t->id = PIPE;
         lexer_read_char(lexer);
+        if (lexer->cur_char == '|') {
+            t->id = PIPE_PIPE;
+            lexer_read_char(lexer);
+        } else {
+            t->id = PIPE;
+        }
     } else if (lexer->cur_char == '^') {
         t->id = CARAT;
         lexer_read_char(lexer);
@@ -164,6 +174,9 @@ token* lexer_next_token(lexer_t* lexer) {
         if (lexer->cur_char == '<') {
             t->id = LEFT_SHIFT;
             lexer_read_char(lexer);
+        } else if (lexer->cur_char == '=') {
+            t->id = LESS_THAN_EQUAL;
+            lexer_read_char(lexer);
         } else {
             t->id = LESS_THAN;
         }
@@ -171,6 +184,9 @@ token* lexer_next_token(lexer_t* lexer) {
         lexer_read_char(lexer);
         if (lexer->cur_char == '>') {
             t->id = RIGHT_SHIFT;
+            lexer_read_char(lexer);
+        } else if (lexer->cur_char == '=') {
+            t->id = GREATER_THAN_EQUAL;
             lexer_read_char(lexer);
         } else {
             t->id = GREATER_THAN;
@@ -182,6 +198,22 @@ token* lexer_next_token(lexer_t* lexer) {
             lexer_read_char(lexer);
         } else {
             t->id = HYPHEN;
+        }
+    } else if (lexer->cur_char == '!') {
+        lexer_read_char(lexer);
+        if (lexer->cur_char == '=') {
+            t->id = EXCLAM_EQUAL;
+            lexer_read_char(lexer);
+        } else {
+            t->id = EXCLAM;
+        }
+    } else if (lexer->cur_char == '=') {
+        lexer_read_char(lexer);
+        if (lexer->cur_char == '=') {
+            t->id = EQUAL_EQUAL;
+            lexer_read_char(lexer);
+        } else {
+            t->id = EQUAL;
         }
     } else {
         printf("UNKNOWN TOKEN ENCOUNTERED\n");
@@ -238,10 +270,24 @@ void print_token(token t) {
             printf("<"); break;
         case GREATER_THAN:
             printf(">"); break;
-        case LEFT_SHIFT:
-            printf("<<"); break;
+        case GREATER_THAN_EQUAL:
+            printf(">="); break;
+        case LESS_THAN_EQUAL:
+            printf("<="); break;
+        case EQUAL_EQUAL:
+            printf("=="); break;
+        case EXCLAM:
+            printf("!"); break;
+        case EXCLAM_EQUAL:
+            printf("!="); break;
+        case AMPERSAND_AMPERSAND:
+            printf("&&"); break;
+        case PIPE_PIPE:
+            printf("||"); break;
         case RIGHT_SHIFT:
-            printf(">>"); break;     
+            printf(">>"); break;
+        case LEFT_SHIFT:
+            printf("<<"); break;     
         default:
             printf("UNKNOWN TOKEN\n");
             exit(1);
