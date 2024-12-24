@@ -20,6 +20,8 @@ void ir_print_unary(ir_unary_node* unary) {
         printf("~, ");
     } else if (unary->op == IR_NEGATE) {
         printf("-, ");
+    } else if (unary->op == IR_NOT) {
+        printf("!, ");
     }
     ir_print_val(unary->src);
     printf(", ");

@@ -39,14 +39,14 @@ char* ir_make_temp_var() {
     return res;
 }   
 
-char* ir_make_false_label() {
-    char* res = ir_make_n_ident("lbl_false.", IR_FALSE_IDX);
+char* ir_make_shortcircuit_label() {
+    char* res = ir_make_n_ident("_sc.", IR_FALSE_IDX);
     IR_FALSE_IDX++;
     return res;
 }
 
 char* ir_make_end_label() {
-    char* res = ir_make_n_ident("lbl_end.", IR_END_IDX);
+    char* res = ir_make_n_ident("_end.", IR_END_IDX);
     IR_END_IDX++;
     return res;
 }
@@ -228,15 +228,16 @@ ir_val_node* expr_to_ir(expr_node* expr, list(ir_instruction_node *)* instructio
             // short circuit operators...
             ir_val_node* v1 = expr_to_ir(expr->expr.binary_expr->lhs, instructions);
             // short circuit if zero for and, if nonzero for or.
-            char* f = ir_make_false_label();
-            ir_instruction_node* jmp1 = (op == IR_LOGICAL_AND) ? ir_create_jumpz_instr(v1, f) : ir_create_jumpnz_instr(v1, f);
+            char* sc = ir_make_shortcircuit_label();
+            ir_instruction_node* jmp1 = (op == IR_LOGICAL_AND) ? ir_create_jumpz_instr(v1, sc) : ir_create_jumpnz_instr(v1, sc);
             list_append(instructions, (void*)jmp1);
             ir_val_node* v2 = expr_to_ir(expr->expr.binary_expr->rhs, instructions);
-            ir_instruction_node* jmp2 = (op == IR_LOGICAL_AND) ? ir_create_jumpz_instr(v2, f) : ir_create_jumpnz_instr(v2, f);
+            ir_instruction_node* jmp2 = (op == IR_LOGICAL_AND) ? ir_create_jumpz_instr(v2, sc) : ir_create_jumpnz_instr(v2, sc);
             list_append(instructions, (void*)jmp2);
             ir_val_node* val1 = MALLOC(ir_val_node);
             val1->type = IR_CONSTANT;
-            val1->val.constant = ir_create_constant(1);
+            // based off if we short circuit an && or ||.
+            val1->val.constant = (op == IR_LOGICAL_AND) ? ir_create_constant(1) : ir_create_constant(0);
             char* dest_name = ir_make_temp_var();
             ir_val_node* dest = ir_create_var(dest_name);
             ir_instruction_node* copy1 = ir_create_copy_instr(val1, dest);
@@ -244,11 +245,12 @@ ir_val_node* expr_to_ir(expr_node* expr, list(ir_instruction_node *)* instructio
             char* end = ir_make_end_label();
             ir_instruction_node* jmp3 = ir_create_jump_instr(end);
             list_append(instructions, (void*)jmp3);
-            ir_instruction_node* label1 = ir_create_label_instr(f);
+            ir_instruction_node* label1 = ir_create_label_instr(sc);
             list_append(instructions, (void*)label1);
             ir_val_node* val2 = MALLOC(ir_val_node);
             val2->type = IR_CONSTANT;
-            val2->val.constant = ir_create_constant(0);
+            // based off if we short circuit an && or ||.
+            val2->val.constant = (op == IR_LOGICAL_AND) ? ir_create_constant(0) : ir_create_constant(1);
             ir_instruction_node* copy2 = ir_create_copy_instr(val2, dest);
             list_append(instructions, (void*)copy2);
             ir_instruction_node* label2 = ir_create_label_instr(end);

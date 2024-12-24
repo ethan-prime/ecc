@@ -13,9 +13,10 @@ typedef struct
     int i;
 } asm_immediate_node;
 
-typedef enum {
+typedef enum
+{
     AX,
-    CL,
+    CX,
     DX,
     R10,
     R11,
@@ -26,11 +27,13 @@ typedef struct
     asm_register_t reg;
 } asm_register_node;
 
-typedef struct {
-    char* reg_name;
+typedef struct
+{
+    char *reg_name;
 } asm_pseudo_node;
 
-typedef struct {
+typedef struct
+{
     int offset;
 } asm_stack_node;
 
@@ -47,40 +50,45 @@ typedef struct
     operand_type type;
     union
     {
-        asm_register_node* reg;
-        asm_immediate_node* imm;
-        asm_pseudo_node* pseudo;
-        asm_stack_node* stack;
+        asm_register_node *reg;
+        asm_immediate_node *imm;
+        asm_pseudo_node *pseudo;
+        asm_stack_node *stack;
     } operand;
 } operand_node;
 
-typedef enum {
-    ASM_LONG,
-    ASM_BYTE,
-} mov_size;
+typedef enum
+{
+    OP_4_BYTES,
+    OP_1_BYTE,
+} op_size;
 
 typedef struct
 {
-    operand_node* src;
-    operand_node* dest;
-    mov_size size;
+    operand_node *src;
+    operand_node *dest;
+    op_size size;
 } asm_move_node;
 
-typedef struct {
+typedef struct
+{
     int n_bytes;
 } asm_stackalloc_node;
 
-typedef enum {
+typedef enum
+{
     ASM_NOT,
     ASM_NEG,
 } asm_unary_op;
 
-typedef struct {
+typedef struct
+{
     asm_unary_op op;
-    operand_node* dest;
+    operand_node *dest;
 } asm_unary_node;
 
-typedef enum {
+typedef enum
+{
     ASM_ADD,
     ASM_SUB,
     ASM_MULT,
@@ -91,15 +99,55 @@ typedef enum {
     ASM_RIGHT_SHIFT,
 } asm_binary_op;
 
-typedef struct {
+typedef struct
+{
     asm_binary_op op;
-    operand_node* src;
-    operand_node* dest;
+    operand_node *src;
+    operand_node *dest;
 } asm_binary_node;
 
-typedef struct {
-    operand_node* divisor;
+typedef struct
+{
+    operand_node *divisor;
 } asm_idiv_node;
+
+typedef struct
+{
+    operand_node *src1;
+    operand_node *src2;
+} asm_cmp_node;
+
+typedef struct
+{
+    char *identifier;
+} asm_jmp_node;
+
+typedef enum
+{
+    E,
+    NE,
+    G,
+    GE,
+    L,
+    LE
+} cond_code;
+
+typedef struct
+{
+    cond_code type;
+    char *identifier;
+} asm_jmpcc_node;
+
+typedef struct
+{
+    cond_code type;
+    operand_node *dest;
+} asm_setcc_node;
+
+typedef struct
+{
+    char *identifier;
+} asm_label_node;
 
 typedef enum
 {
@@ -110,6 +158,11 @@ typedef enum
     INSTR_BINARY,
     INSTR_IDIV,
     INSTR_CDQ,
+    INSTR_CMP,
+    INSTR_JMP,
+    INSTR_JMPCC,
+    INSTR_SETCC,
+    INSTR_LABEL,
 } instruction_type;
 
 typedef struct
@@ -117,19 +170,24 @@ typedef struct
     instruction_type type;
     union
     {
-        asm_move_node* mov;
-        asm_stackalloc_node* stackalloc;
-        asm_unary_node* unary;
-        asm_binary_node* binary;
-        asm_idiv_node* idiv;
+        asm_move_node *mov;
+        asm_stackalloc_node *stackalloc;
+        asm_unary_node *unary;
+        asm_binary_node *binary;
+        asm_idiv_node *idiv;
+        asm_cmp_node *cmp;
+        asm_jmp_node *jmp;
+        asm_jmpcc_node *jmpcc;
+        asm_setcc_node *setcc;
+        asm_label_node *label;
     } instruction;
 } asm_instruction_node;
 
 typedef struct asm_function_node
 {
     char *identifier;
-    list(asm_instruction_node*)* instructions;
-    stackmap* sm;
+    list(asm_instruction_node *) * instructions;
+    stackmap *sm;
 } asm_function_node;
 
 typedef struct asm_program_node
@@ -139,23 +197,37 @@ typedef struct asm_program_node
 
 typedef asm_instruction_node asm_i;
 
-asm_program_node* ir_program_to_asm(ir_program_node* program);
-asm_function_node* ir_function_to_asm(ir_function_node* function);
+asm_program_node *ir_program_to_asm(ir_program_node *program);
+asm_function_node *ir_function_to_asm(ir_function_node *function);
 
 // instructions:
-list(asm_i*)* ir_unary_to_asm(ir_unary_node* unary);
-list(asm_i*)* ir_binary_to_asm(ir_binary_node* binary);
-list(asm_i*)* ir_return_to_asm(ir_return_node* ret);
+list(asm_i *) * ir_unary_to_asm(ir_unary_node *unary);
+list(asm_i *) * ir_return_to_asm(ir_return_node *ret);
 
-asm_i* asm_create_idiv_instr(operand_node* divisor);
-asm_i* asm_create_move_instr(mov_size size, operand_node* src, operand_node* dest);
-asm_i* asm_create_unary_instr(asm_unary_op op, operand_node* dest);
-asm_i* asm_create_binary_instr(asm_binary_op op, operand_node* src, operand_node* dest);
-asm_i* asm_create_ret_instr();
-asm_i* asm_create_cdq_instr();
+list(asm_i *) * ir_binary_to_asm(ir_binary_node *binary);
+list(asm_i *) * ir_relational_to_asm(ir_binary_node *binary);
+list(asm_i *) * ir_shift_to_asm(ir_binary_node *binary);
+list(asm_i *) * ir_remainder_to_asm(ir_binary_node *binary);
+list(asm_i *) * ir_div_to_asm(ir_binary_node *binary);
 
-operand_node* asm_create_register_operand(asm_register_t reg);
+list(asm_i *) * ir_jump_to_asm(ir_jump_node *jump);
+list(asm_i *) * ir_jumpz_to_asm(ir_jumpz_node *jumpz);
+list(asm_i *) * ir_jumpnz_to_asm(ir_jumpnz_node *jumpnz);
+
+asm_i *asm_create_idiv_instr(operand_node *divisor);
+asm_i *asm_create_mov_instr(op_size size, operand_node *src, operand_node *dest);
+asm_i *asm_create_unary_instr(asm_unary_op op, operand_node *dest);
+asm_i *asm_create_binary_instr(asm_binary_op op, operand_node *src, operand_node *dest);
+asm_i *asm_create_ret_instr();
+asm_i *asm_create_cdq_instr();
+asm_i *asm_create_jmp_instr(char *identifier);
+asm_i *asm_create_jmpcc_instr(cond_code type, char *identifier);
+asm_i *asm_create_cmp_instr(operand_node *src1, operand_node *src2);
+asm_i *asm_create_setcc_instr(cond_code type, operand_node *dest);
+
+operand_node *asm_create_register_operand(asm_register_t reg);
+asm_pseudo_node *asm_create_pseudo(char *identifier);
+asm_immediate_node *asm_create_immediate(int n);
+
+#define IMMEDIATE(n) (asm_create_immediate_operand(n))
 #define REGISTER(r) (asm_create_register_operand(r))
-asm_pseudo_node* asm_create_pseudo(char* identifier);
-asm_immediate_node* asm_create_immediate(int n);
-#define IMMEDIATE(n) (asm_create_immediate(n))
