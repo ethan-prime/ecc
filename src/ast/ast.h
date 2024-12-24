@@ -9,6 +9,7 @@ typedef struct constant_node {
 typedef enum {
     COMPLEMENT,
     NEGATE,
+    NOT, //(!)
 } unary_op;
 
 struct expr_node;
@@ -28,6 +29,14 @@ typedef enum {
     BITWISE_XOR,
     BITWISE_LEFT_SHIFT,
     BITWISE_RIGHT_SHIFT,
+    LOGICAL_AND,
+    LOGICAL_OR,
+    LOGICAL_EQUAL,
+    LOGICAL_NOT_EQUAL,
+    LOGICAL_LT,
+    LOGICAL_GT,
+    LOGICAL_LTE,
+    LOGICAL_GTE,
 } binary_op;
 
 typedef struct {

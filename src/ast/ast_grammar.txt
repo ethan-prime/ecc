@@ -1,0 +1,10 @@
+program = Program(function_definition)
+function_definition = Function(identifier name, statement body)
+statement = Return(exp)
+exp = Constant(int)
+    | Unary(unary_operator, exp)
+    | Binary(binary_operator, exp, exp)
+unary_operator = Complement | Negate | Not
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
+    | Equal | NotEqual | LessThan | LessOrEqual
+    | GreaterThan | GreaterOrEqual

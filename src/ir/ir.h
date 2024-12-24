@@ -33,6 +33,7 @@ typedef struct
 typedef enum {
     IR_COMPLEMENT,
     IR_NEGATE,
+    IR_NOT,
 } ir_unary_op;
 
 typedef struct
@@ -53,6 +54,14 @@ typedef enum {
     IR_BITWISE_XOR,
     IR_BITWISE_LEFT_SHIFT,
     IR_BITWISE_RIGHT_SHIFT,
+    IR_LOGICAL_LT,
+    IR_LOGICAL_LTE,
+    IR_LOGICAL_GT,
+    IR_LOGICAL_GTE,
+    IR_LOGICAL_EQUAL,
+    IR_LOGICAL_NOT_EQUAL,
+    IR_LOGICAL_AND,
+    IR_LOGICAL_OR,
 } ir_binary_op;
 
 typedef struct {
@@ -66,11 +75,39 @@ typedef struct {
     ir_val_node* val;
 } ir_return_node;
 
+typedef struct {
+    ir_val_node* src;
+    ir_val_node* dest;
+} ir_copy_node;
+
+typedef struct {
+    char* target;
+} ir_jump_node;
+
+typedef struct {
+    ir_val_node* condition;
+    char* target;
+} ir_jumpz_node;
+
+typedef struct {
+    ir_val_node* condition;
+    char* target;
+} ir_jumpnz_node;
+
+typedef struct {
+    char* identifier;
+} ir_label_node;
+
 typedef enum
 {
     IR_INSTR_RET,
     IR_INSTR_UNARY,
     IR_INSTR_BINARY,
+    IR_INSTR_COPY,
+    IR_INSTR_JUMP,
+    IR_INSTR_JUMPZ,
+    IR_INSTR_JUMPNZ,
+    IR_INSTR_LABEL,
 } ir_instruction_type;
 
 typedef struct
@@ -81,6 +118,11 @@ typedef struct
         ir_return_node* ret;
         ir_unary_node* unary;
         ir_binary_node* binary;
+        ir_copy_node* copy;
+        ir_jump_node* jump;
+        ir_jumpz_node* jumpz;
+        ir_jumpnz_node* jumpnz;
+        ir_label_node* label;
     } instruction;
 } ir_instruction_node;
 

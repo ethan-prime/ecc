@@ -34,6 +34,22 @@ void print_binop(binary_op op) {
         printf("<<");
     } else if (op == BITWISE_RIGHT_SHIFT) {
         printf(">>");
+    } else if (op == LOGICAL_AND) {
+        printf("&&");
+    } else if (op == LOGICAL_OR) {
+        printf("||");
+    } else if (op == LOGICAL_EQUAL) {
+        printf("==");
+    } else if (op == LOGICAL_NOT_EQUAL) {
+        printf("!=");
+    } else if (op == LOGICAL_LT) {
+        printf("<");
+    } else if (op == LOGICAL_LTE) {
+        printf("<=");
+    } else if (op == LOGICAL_GT) {
+        printf(">");
+    } else if (op == LOGICAL_GTE) {
+        printf(">=");
     }
 }
 
@@ -46,7 +62,9 @@ void print_expr(expr_node *expr, int depth) {
         if (expr->expr.unary_expr->op == COMPLEMENT) {
             printf("~,\n");
         } else if (expr->expr.unary_expr->op == NEGATE) {
-            printf("Negate,\n");
+            printf("-,\n");
+        } else if (expr->expr.unary_expr->op == NOT) {
+            printf("!,\n");
         }
         print_expr(expr->expr.unary_expr->expr, depth+1);
         print_tabs(depth);

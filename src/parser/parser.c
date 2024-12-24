@@ -35,7 +35,7 @@ constant_node* parse_constant(token_queue* tq) {
 }
 
 int is_unary_op(token* tok) {
-    return (tok->id == HYPHEN || tok->id == TILDE);
+    return (tok->id == HYPHEN || tok->id == TILDE || tok->id == EXCLAM);
 }
 
 unary_node* parse_unary_expr(token_queue* tq) {
@@ -51,6 +51,8 @@ unary_node* parse_unary_expr(token_queue* tq) {
         node->op = NEGATE;
     } else if (cur->id == TILDE) {
         node->op = COMPLEMENT;
+    } else if (cur->id == EXCLAM) {
+        node->op = NOT;
     }
 
     token_queue_deq(tq);
@@ -100,7 +102,8 @@ expr_node* parse_factor(token_queue* tq) {
 
 int is_binary_op(token* tok) {
     token_id id = tok->id;
-    if (id == PLUS || id == HYPHEN || id == ASTERISK || id == FORWARD_SLASH || id == PERCENT || id == PERCENT || id == AMPERSAND || id == PIPE || id == CARAT || id == LEFT_SHIFT || id == RIGHT_SHIFT) {
+    if (id == PLUS || id == HYPHEN || id == ASTERISK || id == FORWARD_SLASH || id == PERCENT || id == PERCENT || id == AMPERSAND || id == PIPE || id == CARAT || id == LEFT_SHIFT || id == RIGHT_SHIFT
+        || id == AMPERSAND_AMPERSAND || id == PIPE_PIPE || id == EQUAL_EQUAL || id == EXCLAM_EQUAL || id == LESS_THAN || id == LESS_THAN_EQUAL || id == GREATER_THAN || id == GREATER_THAN_EQUAL) {
         return 1;
     }
     return 0;
@@ -127,8 +130,14 @@ binary_op parse_binop(token_queue* tq) {
         case AMPERSAND:
             op = BITWISE_AND;
             break;
+        case AMPERSAND_AMPERSAND:
+            op = LOGICAL_AND;
+            break;
         case PIPE:
             op = BITWISE_OR;
+            break;
+        case PIPE_PIPE:
+            op = LOGICAL_OR;
             break;
         case CARAT:
             op = BITWISE_XOR;
@@ -138,6 +147,24 @@ binary_op parse_binop(token_queue* tq) {
             break;
         case RIGHT_SHIFT:
             op = BITWISE_RIGHT_SHIFT;
+            break;
+        case LESS_THAN:
+            op = LOGICAL_LT;
+            break;
+        case GREATER_THAN:
+            op = LOGICAL_GT;
+            break;
+        case LESS_THAN_EQUAL:
+            op = LOGICAL_LTE;
+            break;
+        case GREATER_THAN_EQUAL:
+            op = LOGICAL_GTE;
+            break;
+        case EQUAL_EQUAL:
+            op = LOGICAL_EQUAL;
+            break;
+        case EXCLAM_EQUAL:
+            op = LOGICAL_NOT_EQUAL;
             break;
         default:
             parser_error("a binary op", token_queue_cur(tq));
@@ -171,6 +198,22 @@ int precedence(token* tok) {
             return PREC_LEFT_SHIFT;
         case RIGHT_SHIFT:
             return PREC_RIGHT_SHIFT;
+        case AMPERSAND_AMPERSAND:
+            return PREC_LOGICAL_AND;
+        case PIPE_PIPE:
+            return PREC_LOGICAL_OR;
+        case EQUAL_EQUAL:
+            return PREC_LOGICAL_EQUAL;
+        case EXCLAM_EQUAL:
+            return PREC_LOGICAL_NOT_EQUAL;
+        case LESS_THAN:
+            return PREC_LT;
+        case LESS_THAN_EQUAL:
+            return PREC_LTE;
+        case GREATER_THAN:
+            return PREC_GT;
+        case GREATER_THAN_EQUAL:
+            return PREC_GTE;
         default:
             return -1;
     }

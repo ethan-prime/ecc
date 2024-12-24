@@ -49,6 +49,22 @@ void ir_print_binary(ir_binary_node* binary) {
         printf("<<, ");
     } else if (binary->op == IR_BITWISE_RIGHT_SHIFT) {
         printf(">>, ");
+    } else if (binary->op == IR_LOGICAL_AND) {
+        printf("&&, ");
+    } else if (binary->op == IR_LOGICAL_OR) {
+        printf("||, ");
+    } else if (binary->op == IR_LOGICAL_LT) {
+        printf("<, ");
+    } else if (binary->op == IR_LOGICAL_GT) {
+        printf(">, ");
+    } else if (binary->op == IR_LOGICAL_LTE) {
+        printf("<=, ");
+    } else if (binary->op == IR_LOGICAL_GTE) {
+        printf(">=, ");
+    } else if (binary->op == IR_LOGICAL_EQUAL) {
+        printf("==, ");
+    } else if (binary->op == IR_LOGICAL_NOT_EQUAL) {
+        printf("!=, ");
     }
     ir_print_val(binary->src1);
     printf(", ");
@@ -56,6 +72,34 @@ void ir_print_binary(ir_binary_node* binary) {
     printf(", ");
     ir_print_val(binary->dest);
     printf(")\n");
+}
+
+void ir_print_copy(ir_copy_node* copy) {
+    printf("Copy(");
+    ir_print_val(copy->src);
+    printf(", ");
+    ir_print_val(copy->dest);
+    printf(")\n");
+}
+
+void ir_print_jump(ir_jump_node* jump) {
+    printf("Jump(%s)\n", jump->target);
+}
+
+void ir_print_jumpz(ir_jumpz_node* jumpz) {
+    printf("JumpZero(");
+    ir_print_val(jumpz->condition);
+    printf(", %s)\n", jumpz->target);
+}
+
+void ir_print_jumpnz(ir_jumpnz_node* jumpnz) {
+    printf("JumpNotZero(");
+    ir_print_val(jumpnz->condition);
+    printf(", %s)\n", jumpnz->target);
+}
+
+void ir_print_label(ir_label_node* label) {
+    printf("Label(%s)\n", label->identifier);
 }
 
 void ir_print_instructions(list(ir_instruction_node)* instrs) {
@@ -67,6 +111,16 @@ void ir_print_instructions(list(ir_instruction_node)* instrs) {
             ir_print_unary(instr->instruction.unary);
         } else if (instr->type == IR_INSTR_BINARY) {
             ir_print_binary(instr->instruction.binary);
+        } else if (instr->type == IR_INSTR_COPY) {
+            ir_print_copy(instr->instruction.copy);
+        } else if (instr->type == IR_INSTR_JUMP) {
+            ir_print_jump(instr->instruction.jump);
+        } else if (instr->type == IR_INSTR_JUMPZ) {
+            ir_print_jumpz(instr->instruction.jumpz);
+        } else if (instr->type == IR_INSTR_JUMPNZ) {
+            ir_print_jumpnz(instr->instruction.jumpnz);
+        } else if (instr->type == IR_INSTR_LABEL) {
+            ir_print_label(instr->instruction.label);
         }
     }
 }

@@ -2,28 +2,54 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #define MALLOC(type) ((type *)malloc(sizeof(type)))
 
 int IR_VAR_IDX = 0;
+int IR_FALSE_IDX = 0;
+int IR_END_IDX = 0;
 
-char* ir_make_temp_var() {
-    int n_places;
-    if (IR_VAR_IDX == 0) {
-        n_places = 1;
-    } else {
-       n_places = (int)log10((double)IR_VAR_IDX) + 1; 
-    }
-    char* res = (char *)malloc(sizeof(char)*(n_places+2)); // space for % and \0
-    res[0] = '%';
-    int n = IR_VAR_IDX;
+// converts n to string repr, stores at *buf. MAKE SURE TO MALLOC floor(log10(n)) + 2 bytes (n_places + 1).
+void int_to_str(char* buf, int n, int n_places) {
     for (int i = 0; i < n_places; i++) {
-        res[n_places-i] = 0x30 + (n % 10); // add the last digit to the buffer, convert to ascii
+        buf[n_places-i-1] = 0x30 + (n % 10); // add the last digit to the buffer, convert to ascii
         n /= 10; // drop the last digit
     }
-    res[n_places+1] = '\0';
+    buf[n_places] = '\0';
+}
+
+// makes an "n identifier": "<prefix><n>"
+char* ir_make_n_ident(char* prefix, int n) {
+    int n_places;
+    if (n == 0) {
+        n_places = 1;
+    } else {
+       n_places = (int)log10((double)n) + 1; 
+    }
+    size_t bytes = (size_t)(n_places + strlen(prefix) + 1);
+    char* res = (char *)malloc(sizeof(char)*bytes);
+    strcpy(res, prefix);
+    int_to_str(&res[strlen(prefix)], n, n_places);
+    return res;
+}
+
+char* ir_make_temp_var() {
+    char* res = ir_make_n_ident("tmp.", IR_VAR_IDX);
     IR_VAR_IDX++;
     return res;
 }   
+
+char* ir_make_false_label() {
+    char* res = ir_make_n_ident("lbl_false.", IR_FALSE_IDX);
+    IR_FALSE_IDX++;
+    return res;
+}
+
+char* ir_make_end_label() {
+    char* res = ir_make_n_ident("lbl_end.", IR_END_IDX);
+    IR_END_IDX++;
+    return res;
+}
 
 ir_constant_node* ir_create_constant(int c) {
     ir_constant_node* node = MALLOC(ir_constant_node);
@@ -40,34 +66,100 @@ ir_val_node* ir_create_var(char* identifier) {
     return val;
 }
 
-ir_unary_node* ir_create_unary_node(ir_unary_op op, ir_val_node* src, ir_val_node* dest) {
-    ir_unary_node* node = MALLOC(ir_unary_node);
-    node->op = op;
-    node->src = src;
-    node->dest = dest;
-    return node;
-}
-
-ir_binary_node* ir_create_binary_node(ir_binary_op op, ir_val_node* src1, ir_val_node* src2, ir_val_node* dest) {
-    ir_binary_node* node = MALLOC(ir_binary_node);
-    node->op = op;
-    node->src1 = src1;
-    node->src2 = src2;
-    node->dest = dest;
-    return node;
-}
-
 ir_return_node* ir_create_return_node(ir_val_node* val) {
     ir_return_node* node = MALLOC(ir_return_node);
     node->val = val;
     return node;
 }
 
+ir_instruction_node* ir_create_unary_instr(ir_unary_op op, ir_val_node* src, ir_val_node* dest) {
+    ir_unary_node* node = MALLOC(ir_unary_node);
+    node->op = op;
+    node->src = src;
+    node->dest = dest;
+
+    ir_instruction_node* i = MALLOC(ir_instruction_node);
+    i->type = IR_INSTR_UNARY;
+    i->instruction.unary = node;
+
+    return i;
+}
+
+ir_instruction_node* ir_create_binary_instr(ir_binary_op op, ir_val_node* src1, ir_val_node* src2, ir_val_node* dest) {
+    ir_binary_node* node = MALLOC(ir_binary_node);
+    node->op = op;
+    node->src1 = src1;
+    node->src2 = src2;
+    node->dest = dest;
+
+    ir_instruction_node* i = MALLOC(ir_instruction_node);
+    i->type = IR_INSTR_BINARY;
+    i->instruction.binary = node;
+
+    return i;
+}
+
+ir_instruction_node* ir_create_jump_instr(char* target) {
+    ir_jump_node* node = MALLOC(ir_jump_node);
+    node->target = target;
+    
+    ir_instruction_node* i = MALLOC(ir_instruction_node);
+    i->type = IR_INSTR_JUMP;
+    i->instruction.jump = node;
+    return i;
+}
+
+ir_instruction_node* ir_create_jumpz_instr(ir_val_node* condition, char* target) {
+    ir_jumpz_node* node = MALLOC(ir_jumpz_node);
+    node->condition = condition;
+    node->target = target;
+    
+    ir_instruction_node* i = MALLOC(ir_instruction_node);
+    i->type = IR_INSTR_JUMPZ;
+    i->instruction.jumpz = node;
+    return i;
+}
+
+ir_instruction_node* ir_create_jumpnz_instr(ir_val_node* condition, char* target) {
+    ir_jumpnz_node* node = MALLOC(ir_jumpnz_node);
+    node->condition = condition;
+    node->target = target;
+    
+    ir_instruction_node* i = MALLOC(ir_instruction_node);
+    i->type = IR_INSTR_JUMPNZ;
+    i->instruction.jumpnz = node;
+    return i;
+}
+
+ir_instruction_node* ir_create_copy_instr(ir_val_node* src, ir_val_node* dest) {
+    ir_copy_node* node = MALLOC(ir_copy_node);
+    node->src = src;
+    node->dest = dest;
+    
+    ir_instruction_node* i = MALLOC(ir_instruction_node);
+    i->type = IR_INSTR_COPY;
+    i->instruction.copy = node;
+    return i;
+}
+
+ir_instruction_node* ir_create_label_instr(char* identifier) {
+    ir_label_node* node = MALLOC(ir_label_node);
+    node->identifier = identifier;
+
+    ir_instruction_node* i = MALLOC(ir_instruction_node);
+    i->type = IR_INSTR_LABEL;
+    i->instruction.label = node;
+    return i;
+}
+
+
 ir_unary_op unary_op_to_ir(unary_op op) {
     if (op == COMPLEMENT) {
         return IR_COMPLEMENT;
-    } else {
+    } else if (op == NEGATE) {
         return IR_NEGATE;
+    } else {
+        return IR_NOT;
     }
 }
 
@@ -90,8 +182,24 @@ ir_binary_op binary_op_to_ir(binary_op op) {
         return IR_BITWISE_XOR;
     } else if (op == BITWISE_LEFT_SHIFT) {
         return IR_BITWISE_LEFT_SHIFT;
-    } else {
+    } else if (op == BITWISE_RIGHT_SHIFT) {
         return IR_BITWISE_RIGHT_SHIFT;
+    } else if (op == LOGICAL_LT) {
+        return IR_LOGICAL_LT;
+    } else if (op == LOGICAL_GT) {
+        return IR_LOGICAL_GT;
+    } else if (op == LOGICAL_LTE) {
+        return IR_LOGICAL_LTE;
+    } else if (op == LOGICAL_GTE) {
+        return IR_LOGICAL_GTE;
+    } else if (op == LOGICAL_EQUAL) {
+        return IR_LOGICAL_EQUAL;
+    } else if (op == LOGICAL_NOT_EQUAL) {
+        return IR_LOGICAL_NOT_EQUAL;
+    } else if (op == LOGICAL_AND) {
+        return IR_LOGICAL_AND;
+    } else {
+        return IR_LOGICAL_OR;
     }
 }
 
@@ -110,23 +218,50 @@ ir_val_node* expr_to_ir(expr_node* expr, list(ir_instruction_node *)* instructio
         ir_val_node* dest = ir_create_var(dest_name);
         // create new Unary TAC instruction.
         ir_unary_op op = unary_op_to_ir(expr->expr.unary_expr->op);
-        ir_instruction_node* unary_instr = MALLOC(ir_instruction_node);
-        unary_instr->type = IR_INSTR_UNARY;
-        unary_instr->instruction.unary = ir_create_unary_node(op, src, dest);
-        // add instructions to the list...
+        ir_instruction_node* unary_instr = ir_create_unary_instr(op, src, dest);
         list_append(instructions, (void*)unary_instr);
         // return destination val node so we can use the result.
         return dest;
     } else if (expr->type == EXPR_BINARY) {
+        ir_binary_op op = binary_op_to_ir(expr->expr.binary_expr->op);
+        if (op == IR_LOGICAL_AND || op == IR_LOGICAL_OR) {
+            // short circuit operators...
+            ir_val_node* v1 = expr_to_ir(expr->expr.binary_expr->lhs, instructions);
+            // short circuit if zero for and, if nonzero for or.
+            char* f = ir_make_false_label();
+            ir_instruction_node* jmp1 = (op == IR_LOGICAL_AND) ? ir_create_jumpz_instr(v1, f) : ir_create_jumpnz_instr(v1, f);
+            list_append(instructions, (void*)jmp1);
+            ir_val_node* v2 = expr_to_ir(expr->expr.binary_expr->rhs, instructions);
+            ir_instruction_node* jmp2 = (op == IR_LOGICAL_AND) ? ir_create_jumpz_instr(v2, f) : ir_create_jumpnz_instr(v2, f);
+            list_append(instructions, (void*)jmp2);
+            ir_val_node* val1 = MALLOC(ir_val_node);
+            val1->type = IR_CONSTANT;
+            val1->val.constant = ir_create_constant(1);
+            char* dest_name = ir_make_temp_var();
+            ir_val_node* dest = ir_create_var(dest_name);
+            ir_instruction_node* copy1 = ir_create_copy_instr(val1, dest);
+            list_append(instructions, (void*)copy1);
+            char* end = ir_make_end_label();
+            ir_instruction_node* jmp3 = ir_create_jump_instr(end);
+            list_append(instructions, (void*)jmp3);
+            ir_instruction_node* label1 = ir_create_label_instr(f);
+            list_append(instructions, (void*)label1);
+            ir_val_node* val2 = MALLOC(ir_val_node);
+            val2->type = IR_CONSTANT;
+            val2->val.constant = ir_create_constant(0);
+            ir_instruction_node* copy2 = ir_create_copy_instr(val2, dest);
+            list_append(instructions, (void*)copy2);
+            ir_instruction_node* label2 = ir_create_label_instr(end);
+            list_append(instructions, (void*)label2);
+            return dest;
+        }
+        // else, not short circuit operator:
         ir_val_node* src1 = expr_to_ir(expr->expr.binary_expr->lhs, instructions);
         ir_val_node* src2 = expr_to_ir(expr->expr.binary_expr->rhs, instructions);
         char* dest_name = ir_make_temp_var();
         ir_val_node* dest = ir_create_var(dest_name);
-        ir_binary_op op = binary_op_to_ir(expr->expr.binary_expr->op);
 
-        ir_instruction_node* binary_instr = MALLOC(ir_instruction_node);
-        binary_instr->type = IR_INSTR_BINARY;
-        binary_instr->instruction.binary = ir_create_binary_node(op, src1, src2, dest);
+        ir_instruction_node* binary_instr = ir_create_binary_instr(op, src1, src2, dest);\
 
         // add binary expression to instructions
         list_append(instructions, (void*)binary_instr);

@@ -1,12 +1,12 @@
 program = Program(function_definition)
 function_definition = Function(identifier name, instruction* instructions)
 instruction = Mov(operand src, operand dst)
-| Unary(unary_operator, operand)
-| Binary(binary_operator, operand, operand)
-| Idiv(operand)
-| Cdq
-| AllocateStack(int)
-| Ret
+    | Unary(unary_operator, operand)
+    | Binary(binary_operator, operand, operand)
+    | Idiv(operand)
+    | Cdq
+    | AllocateStack(int)
+    | Ret
 unary_operator = Neg | Not
 binary_operator = Add | Sub | Mult
 operand = Imm(int) | Reg(reg) | Pseudo(identifier) | Stack(int)
