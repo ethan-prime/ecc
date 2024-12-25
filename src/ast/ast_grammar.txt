@@ -1,19 +1,14 @@
 program = Program(function_definition)
-function_definition = Function(identifier name, instruction* instructions)
-instruction = Mov(operand src, operand dst)
-            | Unary(unary_operator, operand)
-            | Binary(binary_operator, operand, operand)
-            | Cmp(operand, operand)
-            | Idiv(operand)
-            | Cdq
-            | Jmp(identifier)
-            | JmpCC(cond_code, identifier)
-            | SetCC(cond_code, operand)
-            | Label(identifier)
-            | AllocateStack(int)
-            | Ret
-unary_operator = Neg | Not
-binary_operator = Add | Sub | Mult
-operand = Imm(int) | Reg(reg) | Pseudo(identifier) | Stack(int)
-cond_code = E | NE | G | GE | L | LE
-reg = AX | DX | R10 | R11
+function_definition = Function(identifier name, block_item* body)
+block_item = S(statement) | D(declaration)
+declaration = Declaration(identifier name, exp? init)
+statement = Return(exp) | Expression(exp) | Null
+exp = Constant(int)
+    | Var(identifier)
+    | Unary(unary_operator, exp)
+    | Binary(binary_operator, exp, exp)
+    | Assignment(exp, exp)
+unary_operator = Complement | Negate | Not
+binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
+                | Equal | NotEqual | LessThan | LessOrEqual
+                | GreaterThan | GreaterOrEqual

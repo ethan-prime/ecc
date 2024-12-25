@@ -276,6 +276,8 @@ void print_token(token t) {
             printf("<="); break;
         case EQUAL_EQUAL:
             printf("=="); break;
+        case EQUAL:
+            printf("="); break;
         case EXCLAM:
             printf("!"); break;
         case EXCLAM_EQUAL:

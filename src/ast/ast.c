@@ -77,10 +77,20 @@ void print_expr(expr_node *expr, int depth) {
         print_expr(expr->expr.binary_expr->rhs, depth+1);
         print_tabs(depth);
         printf(")\n");
+    } else if (expr->type == EXPR_ASSIGN) {
+        printf("Assign(\n");
+        print_expr(expr->expr.assign->lvalue, depth+1);
+        printf(", ");
+        print_expr(expr->expr.assign->expr, depth+1);
+        print_tabs(depth);
+        printf(")\n");
+    } else if (expr->type == EXPR_VARIABLE) {
+        printf("Var(%s)\n", expr->expr.variable->identifier);
     }
 }
 
 void print_return(return_node *ret, int depth) {
+    print_tabs(depth);
     printf("Return(\n");
     print_expr(ret->expr, depth+1);
     print_tabs(depth);
@@ -88,7 +98,42 @@ void print_return(return_node *ret, int depth) {
 }
 
 void print_statement(statement_node* stmt, int depth) {
-    print_return(stmt->ret, depth);
+    switch(stmt->type) {
+        case STMT_RET:
+            print_return(stmt->stmt.ret, depth);
+            break;
+        case STMT_NULL:
+            printf("Null()\n");
+            break;
+        case STMT_EXPR:
+            print_expr(stmt->stmt.expr, depth);
+    }
+}
+
+void print_declare(declaration_node* declare, int depth) {
+    print_tabs(depth);
+    printf("Declare(\n");
+    print_tabs(depth+1);
+    printf("%s", declare->identifier);
+    if (declare->init != NULL) {
+        printf(", \n");
+        print_expr(declare->init, depth+1);
+    } else {
+        printf("\n");
+    }
+    print_tabs(depth);
+    printf(")\n");
+}
+
+void print_block_item(block_item_node* block_item, int depth) {
+    switch (block_item->type) {
+        case BLOCK_DECLARE:
+            print_declare(block_item->item.declare, depth);
+            break;
+        case BLOCK_STMT:
+            print_statement(block_item->item.stmt, depth);
+            break;
+    }
 }
 
 void print_function(function_node* func, int depth) {
@@ -97,8 +142,11 @@ void print_function(function_node* func, int depth) {
     print_tabs(depth+1);
     printf("name=\"%s\",\n", func->identifier);
     print_tabs(depth+1);
-    printf("body=");
-    print_statement(func->body, depth+1);
+    printf("body=\n");
+    for (int i = 0; i < func->body->len; i++) {
+        block_item_node* block_item = (block_item_node*)list_get(func->body, i);
+        print_block_item(block_item, depth+1);
+    }
     print_tabs(depth);
     printf(")\n");
 }

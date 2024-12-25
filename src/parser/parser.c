@@ -76,6 +76,33 @@ expr_node* create_binary_expr(binary_op op, expr_node* lhs, expr_node* rhs) {
     return node;
 }
 
+expr_node* create_assign(expr_node* lhs, expr_node* rhs) {
+    expr_node* node = MALLOC(expr_node);
+    node->type = EXPR_ASSIGN;
+
+    assign_node* assign = MALLOC(assign_node);
+    assign->expr = rhs;
+    assign->lvalue = lhs;
+
+    node->expr.assign = assign;
+
+    return node;
+}
+
+variable_node* parse_variable_node(token_queue* tq) {
+    variable_node* var = MALLOC(variable_node);
+
+    if (!expect(tq, IDENTIFIER)) {
+        parser_error("an identifier", token_queue_cur(tq));
+    }
+
+    var->identifier = token_queue_cur(tq)->val.s;
+
+    token_queue_deq(tq);
+
+    return var;
+}
+
 expr_node* parse_factor(token_queue* tq) {
     expr_node* node = MALLOC(expr_node);
 
@@ -92,9 +119,12 @@ expr_node* parse_factor(token_queue* tq) {
         }
         token_queue_deq(tq);
         return node;
-    } else {
+    } else if (is_unary_op(token_queue_cur(tq))) {
         node->type = EXPR_UNARY;
         node->expr.unary_expr = parse_unary_expr(tq);
+    } else if (token_queue_cur(tq)->id == IDENTIFIER) {
+        node->type = EXPR_VARIABLE;
+        node->expr.variable = parse_variable_node(tq);
     }
 
     return node;
@@ -103,7 +133,7 @@ expr_node* parse_factor(token_queue* tq) {
 int is_binary_op(token* tok) {
     token_id id = tok->id;
     if (id == PLUS || id == HYPHEN || id == ASTERISK || id == FORWARD_SLASH || id == PERCENT || id == PERCENT || id == AMPERSAND || id == PIPE || id == CARAT || id == LEFT_SHIFT || id == RIGHT_SHIFT
-        || id == AMPERSAND_AMPERSAND || id == PIPE_PIPE || id == EQUAL_EQUAL || id == EXCLAM_EQUAL || id == LESS_THAN || id == LESS_THAN_EQUAL || id == GREATER_THAN || id == GREATER_THAN_EQUAL) {
+        || id == AMPERSAND_AMPERSAND || id == PIPE_PIPE || id == EQUAL_EQUAL || id == EXCLAM_EQUAL || id == LESS_THAN || id == LESS_THAN_EQUAL || id == GREATER_THAN || id == GREATER_THAN_EQUAL || id == EQUAL) {
         return 1;
     }
     return 0;
@@ -214,6 +244,8 @@ int precedence(token* tok) {
             return PREC_GT;
         case GREATER_THAN_EQUAL:
             return PREC_GTE;
+        case EQUAL:
+            return PREC_ASSIGN;
         default:
             return -1;
     }
@@ -223,9 +255,16 @@ expr_node* parse_expr(token_queue* tq, int min_precedence) {
     expr_node* lhs = parse_factor(tq);
     token* cur = token_queue_cur(tq);
     while (is_binary_op(cur) && precedence(cur) >= min_precedence) {
-        binary_op op = parse_binop(tq);
-        expr_node* rhs = parse_expr(tq, precedence(cur) + 1);
-        lhs = create_binary_expr(op, lhs, rhs);
+        if (token_queue_cur(tq)->id == EQUAL) {
+            // we need to be right-associative
+            token_queue_deq(tq);
+            expr_node* rhs = parse_expr(tq, precedence(cur));
+            lhs = create_assign(lhs, rhs);
+        } else {
+            binary_op op = parse_binop(tq);
+            expr_node* rhs = parse_expr(tq, precedence(cur) + 1);
+            lhs = create_binary_expr(op, lhs, rhs);
+        }
         cur = token_queue_cur(tq);
     }
 
@@ -253,9 +292,67 @@ return_node* parse_return(token_queue* tq) {
 statement_node* parse_statement(token_queue* tq) {
     statement_node* node = MALLOC(statement_node);
 
-    node->ret = parse_return(tq);
+    if (token_queue_cur(tq)->id == KEYW_RETURN) {
+        node->type = STMT_RET;
+        node->stmt.ret = parse_return(tq);
+    } else if (token_queue_cur(tq)->id == SEMICOLON) {
+        node->type = STMT_NULL;
+        token_queue_deq(tq);
+    } else {
+        node->type = STMT_EXPR;
+        node->stmt.expr = parse_expr(tq, 0);
+        if (!expect(tq, SEMICOLON)) {
+            parser_error(";", token_queue_cur(tq));
+        }
+        token_queue_deq(tq); // eat ;
+    }
 
     return node;
+}
+
+declaration_node* parse_declaration(token_queue* tq) {
+    declaration_node* node = MALLOC(declaration_node);
+
+    if (!expect(tq, KEYW_INT)) {
+        parser_error("int", token_queue_cur(tq));
+    }
+    token_queue_deq(tq);
+
+    if (!expect(tq, IDENTIFIER)) {
+        parser_error("an identifier", token_queue_cur(tq));
+    }
+    node->identifier = token_queue_cur(tq)->val.s;
+    token_queue_deq(tq);
+
+    // check for optional initialiazer...
+    if (token_queue_cur(tq)->id == EQUAL) {
+        // we have an initializer expr, parse it:
+        token_queue_deq(tq);
+        node->init = parse_expr(tq, 0);
+    }
+
+    if (!expect(tq, SEMICOLON)) {
+        parser_error(";", token_queue_cur(tq));
+    }
+    token_queue_deq(tq);
+
+    return node;
+}
+
+block_item_node* parse_block_item(token_queue* tq) {
+    block_item_node* block_item = MALLOC(block_item_node);
+
+    if (token_queue_cur(tq)->id == KEYW_INT) {
+        // declaration
+        block_item->type = BLOCK_DECLARE;
+        block_item->item.declare = parse_declaration(tq);
+    } else {
+        // statement
+        block_item->type = BLOCK_STMT;
+        block_item->item.stmt = parse_statement(tq);
+    }
+
+    return block_item;
 }
 
 function_node* parse_function(token_queue* tq) {
@@ -293,7 +390,15 @@ function_node* parse_function(token_queue* tq) {
     token_queue_deq(tq);
 
     // parse a statement - later : multiple statements!
-    node->body = parse_statement(tq);
+    list(block_item_node*)* body = list_init();
+
+    while (token_queue_cur(tq)->id != CLOSE_BRACE) {
+        // build function body
+        block_item_node* b = parse_block_item(tq);
+        list_append(body, (void*)b);
+    }
+
+    node->body = body;
 
     if (!expect(tq, CLOSE_BRACE)) {
         parser_error("}", token_queue_cur(tq));

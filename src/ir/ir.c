@@ -288,7 +288,7 @@ list(ir_instruction_node *)* return_to_ir(return_node *ret) {
 
 list(ir_instruction_node *)* statement_to_ir(statement_node *stmt) {
     // right now, we only have return statements
-    return return_to_ir(stmt->ret);
+    return return_to_ir(stmt->stmt.ret);
 }
 
 ir_function_node* function_to_ir(function_node *function) {

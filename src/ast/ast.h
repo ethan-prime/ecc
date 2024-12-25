@@ -1,6 +1,7 @@
 // WE NEED TO USE UNIONS TO SUPPORT MULTIPLE TYPES...
 // RIGHT NOW WE ARE ONLY SUPPORTING ONE
 #pragma once
+#include "../utils/utils_list.h"
 
 typedef struct constant_node {
     int val;
@@ -45,10 +46,21 @@ typedef struct {
     struct expr_node* rhs;
 } binary_node;
 
+typedef struct {
+    char* identifier;
+} variable_node;
+
+typedef struct {
+    struct expr_node* lvalue;
+    struct expr_node* expr;
+} assign_node;
+
 typedef enum {
     EXPR_CONSTANT,
     EXPR_UNARY,
     EXPR_BINARY,
+    EXPR_VARIABLE,
+    EXPR_ASSIGN,
 } expr_type;
 
 typedef struct expr_node {
@@ -57,6 +69,8 @@ typedef struct expr_node {
         constant_node* constant;
         unary_node* unary_expr;
         binary_node* binary_expr;
+        variable_node* variable;
+        assign_node* assign;
     } expr;
 } expr_node;
 
@@ -64,13 +78,41 @@ typedef struct return_node {
     expr_node* expr;
 } return_node;
 
+typedef enum {
+    STMT_RET,
+    STMT_EXPR,
+    STMT_NULL,
+} statement_type;
+
 typedef struct statement_node {
-    return_node* ret;
+    statement_type type;
+    union {
+        return_node* ret;
+        expr_node* expr;
+    } stmt;
 } statement_node;
+
+typedef struct {
+    char* identifier;
+    expr_node* init; // optional
+} declaration_node;
+
+typedef enum {
+    BLOCK_DECLARE,
+    BLOCK_STMT,
+} block_type;
+
+typedef struct {
+    block_type type;
+    union {
+        declaration_node* declare;
+        statement_node* stmt;
+    } item; 
+} block_item_node;
 
 typedef struct function_node {
     char* identifier;
-    statement_node* body;
+    list(block_item_node*)* body;
 } function_node;
 
 typedef struct program_node {

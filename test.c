@@ -1,3 +1,5 @@
 int main() {
-    return !(5 < 4) && ((5+1) % 2 == 0) || 0;
+    int a = 2;
+    a = a + 3;
+    return 3*a && 4;
 }

@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+int HITS;
+int ACCESSES;
+
 // inits a list and returns a ptr to it.
 list *list_init()
 {
@@ -20,8 +23,10 @@ list_node *list_node_create(void *ptr)
 // adds ptr to the list at idx pos. if pos = -1, adds at end.
 // INSERTS BEFORE THE CURRENT ITEM AT THAT INDEX.
 // return 1 if successful 0 otherwise
+// amortized O(1)
 int list_add(list *l, void *ptr, int pos)
 {
+    
     if (pos >= l->len)
     {
         return 0;
@@ -48,6 +53,7 @@ int list_add(list *l, void *ptr, int pos)
     if (l->last_idx < pos) {
         curr = l->last;
         idx = l->last_idx;
+        
     } else {
         curr = l->head;
         idx = 0;
@@ -75,8 +81,10 @@ int list_add(list *l, void *ptr, int pos)
 
 // removes node at index pos from list, returns 1 if successful, 0 otherwise.
 // if pos = -1, removes from end.
+// amortized O(1)
 int list_remove(list *l, int pos)
 {
+    
     if (pos >= l->len)
     {
         return 0;
@@ -96,6 +104,7 @@ int list_remove(list *l, int pos)
     list_node* curr;
     int idx;
     if (l->last_idx < pos) {
+        
         curr = l->last;
         idx = l->last_idx;
     } else {
@@ -122,8 +131,10 @@ int list_remove(list *l, int pos)
 }
 
 // return ptr at index pos
+// amortized O(1)
 void* list_get(list *l, int pos)
 {
+    
     if (pos < 0 || pos >= l->len)
     {
         return NULL;
@@ -133,6 +144,7 @@ void* list_get(list *l, int pos)
     list_node* curr;
     int idx;
     if (l->last_idx <= pos) {
+        
         curr = l->last;
         idx = l->last_idx;
     } else {
@@ -148,11 +160,12 @@ void* list_get(list *l, int pos)
     // update last used
     l->last = curr;
     l->last_idx = idx;
-
+    
     return curr->val;
 }
 
 // concat l2 to the end of l1. l1 modified in-place.
+// O(1)
 void list_concat(list *l1, list *l2)
 {
     list_node *curr = l1->head;
