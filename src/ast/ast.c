@@ -80,7 +80,6 @@ void print_expr(expr_node *expr, int depth) {
     } else if (expr->type == EXPR_ASSIGN) {
         printf("Assign(\n");
         print_expr(expr->expr.assign->lvalue, depth+1);
-        printf(", ");
         print_expr(expr->expr.assign->expr, depth+1);
         print_tabs(depth);
         printf(")\n");
@@ -114,9 +113,9 @@ void print_declare(declaration_node* declare, int depth) {
     print_tabs(depth);
     printf("Declare(\n");
     print_tabs(depth+1);
-    printf("%s", declare->identifier);
+    printf("Var(%s)", declare->identifier);
     if (declare->init != NULL) {
-        printf(", \n");
+        printf("\n");
         print_expr(declare->init, depth+1);
     } else {
         printf("\n");
