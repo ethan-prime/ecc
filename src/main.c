@@ -5,6 +5,7 @@
 #include "lexer/lexer.h"
 #include "lexer/tokens.h"
 #include "parser/parser.h"
+#include "semantics/semantics.h"
 #include "assembly/asm_ast.h"
 #include "assembly/passes.h"
 #include "codegen/codegen.h"
@@ -57,6 +58,7 @@ int main(int argc, char** argv) {
     printf("Sucessfully lexed program...\n");
 
     program_node* program = parse_program(tq);
+    resolve_program(program);
 
     printf("Parsed program:\n");
     print_ast(program);
