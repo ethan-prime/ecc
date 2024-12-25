@@ -1,5 +1,6 @@
 #include "utils_list.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 // inits a list and returns a ptr to it.
 list *list_init()
@@ -27,35 +28,44 @@ int list_add(list *l, void *ptr, int pos)
     }
 
     list_node *node = list_node_create(ptr);
-    list_node *curr = l->head;
+    list_node *curr;
 
     if (pos == 0 || l->len == 0)
     {
+        // insert at front
         node->next = l->head;
         l->head = node;
+        l->last_idx = 0;
+        l->last = l->head;
+        l->len++;
+        return 1;
     }
-    else if (pos == -1)
+    // insert somewhere else
+
+    pos = (pos == -1) ? l->len : pos; // -1 is the last node.
+    // if we can use the last idx node, use that. else switch back to head
+    int idx;
+    if (l->last_idx < pos) {
+        curr = l->last;
+        idx = l->last_idx;
+    } else {
+        curr = l->head;
+        idx = 0;
+    }
+    list_node *prev = NULL;
+    while (idx < pos)
     {
-        // insert at end
-        while (curr->next != NULL)
-        {
-            curr = curr->next;
-        }
-        curr->next = node;
+        prev = curr;
+        curr = curr->next;
+        idx++;
     }
-    else
-    {
-        int idx = 0;
-        list_node *prev = NULL;
-        while (idx < pos)
-        {
-            prev = curr;
-            curr = curr->next;
-            idx++;
-        }
-        prev->next = node;
-        node->next = curr;
-    }
+
+    prev->next = node;
+    node->next = curr;
+
+    // update last used
+    l->last_idx = idx;
+    l->last = node;
 
     // increment the length
     l->len++;
@@ -72,33 +82,38 @@ int list_remove(list *l, int pos)
         return 0;
     }
 
-    list_node *curr = l->head;
-
     if (pos == 0)
     {
         l->head = l->head->next;
+        l->last_idx = 0;
+        l->last = l->head;
+        l->len--;
+        return 1;
     }
-    else if (pos == -1)
+
+    pos = (pos == -1) ? l->len - 1 : pos; // -1 is the last node.
+    // if we can use the last idx node, use that. else switch back to head
+    list_node* curr;
+    int idx;
+    if (l->last_idx < pos) {
+        curr = l->last;
+        idx = l->last_idx;
+    } else {
+        curr = l->head;
+        idx = 0;
+    }
+    list_node* prev = NULL;
+    while (idx < pos)
     {
-        // remove at end
-        while (curr->next->next != NULL)
-        {
-            curr = curr->next;
-        }
-        curr->next = NULL;
+        prev = curr;
+        curr = curr->next;
+        idx++;
     }
-    else
-    {
-        int idx = 0;
-        list_node *prev = NULL;
-        while (idx < pos)
-        {
-            prev = curr;
-            curr = curr->next;
-            idx++;
-        }
-        prev->next = curr->next;
-    }
+    prev->next = curr->next;
+
+    // update last used to prev.
+    l->last_idx = idx - 1;
+    l->last = prev;
 
     // decrement the length
     l->len--;
@@ -107,20 +122,32 @@ int list_remove(list *l, int pos)
 }
 
 // return ptr at index pos
-void *list_get(list *l, int pos)
+void* list_get(list *l, int pos)
 {
     if (pos < 0 || pos >= l->len)
     {
         return NULL;
     }
 
-    list_node *curr = l->head;
-    int idx = 0;
+    // if we can use the last idx node, use that. else switch back to head
+    list_node* curr;
+    int idx;
+    if (l->last_idx <= pos) {
+        curr = l->last;
+        idx = l->last_idx;
+    } else {
+        curr = l->head;
+        idx = 0;
+    }
     while (idx < pos)
     {
         curr = curr->next;
         idx++;
     }
+
+    // update last used
+    l->last = curr;
+    l->last_idx = idx;
 
     return curr->val;
 }
@@ -133,6 +160,8 @@ void list_concat(list *l1, list *l2)
     if (curr == NULL) {
         l1->head = l2->head;
         l1->len += l2->len;
+        l1->last_idx = 0;
+        l1->last = l1->head;
         return;
     }
 
@@ -141,6 +170,8 @@ void list_concat(list *l1, list *l2)
         curr = curr->next;
     }
 
+    l1->last_idx = 0;
+    l1->last = l1->head;
     curr->next = l2->head;
     l1->len += l2->len;
 }

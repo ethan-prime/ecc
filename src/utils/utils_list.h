@@ -7,6 +7,8 @@ typedef struct list_node {
 
 typedef struct list {
     list_node* head;
+    list_node* last; // keep track of last used node for faster indexing
+    int last_idx; // keep track of last idx used for faster indexing
     int len;
 } list;
 

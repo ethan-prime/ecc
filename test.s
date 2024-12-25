@@ -2,7 +2,7 @@
 main:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $24, %rsp
+	subq $28, %rsp
 	movl $5, %r11d
 	cmpl $4, %r11d
 	movl $0, -4(%rbp)
@@ -29,7 +29,17 @@ main:
 .L_sc.0:
 	movl $0, -24(%rbp)
 .L_end.0:
-	movl -24(%rbp), %eax
+	cmpl $0, -24(%rbp)
+	jne .L_sc.1
+	movl $0, %r11d
+	cmpl $0, %r11d
+	jne .L_sc.1
+	movl $0, -28(%rbp)
+	jmp .L_end.1
+.L_sc.1:
+	movl $1, -28(%rbp)
+.L_end.1:
+	movl -28(%rbp), %eax
 	movq %rbp, %rsp
 	popq %rbp
 	ret
