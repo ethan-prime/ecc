@@ -60,7 +60,8 @@ void resolve_declaration(variablemap* vm, declaration_node* declare) {
     char* temp_name = ir_make_n_ident(prefix, USER_DEFINED_COUNTER);
     USER_DEFINED_COUNTER++;
 
-    variablemap_add(vm, declare->identifier, temp_name);
+    variablemap_add(vm, declare->identifier, temp_name); // update map to reflect new temp var mapping.
+    declare->identifier = temp_name; // set identifier to new name.
     if (declare->init != NULL) {
         resolve_expr(vm, declare->init);
     }

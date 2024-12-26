@@ -6,7 +6,10 @@ It can compile arbitrary return expressions that consist of integers. See an exa
 
 ```c
 int main() {
-    return !(5 < 4) && ((5+1) % 2 == 0);
+    int a = 2;
+    int b;
+    b = a = 3 >= a;
+    return 2*b + 5;
 }
 ```
 
@@ -15,34 +18,28 @@ int main() {
 main:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $24, %rsp
-	movl $5, %r11d
-	cmpl $4, %r11d
-	movl $0, -4(%rbp)
-	setl -4(%rbp)
-	cmpl $0, -4(%rbp)
+	subq $20, %rsp
+	movl $2, -4(%rbp)
+	movl $3, %r11d
+	cmpl -4(%rbp), %r11d
 	movl $0, -8(%rbp)
-	sete -8(%rbp)
-	cmpl $0, -8(%rbp)
-	je .L_sc.0
-	movl $5, -12(%rbp)
-	addl $1, -12(%rbp)
-	movl -12(%rbp), %eax
-	cdq
-	movl $2, %r10d
-	idiv %r10d
-	movl %edx, -16(%rbp)
-	cmpl $0, -16(%rbp)
-	movl $0, -20(%rbp)
-	sete -20(%rbp)
-	cmpl $0, -20(%rbp)
-	je .L_sc.0
-	movl $1, -24(%rbp)
-	jmp .L_end.0
-.L_sc.0:
-	movl $0, -24(%rbp)
-.L_end.0:
-	movl -24(%rbp), %eax
+	setle -8(%rbp)
+	movl -8(%rbp), %r10d
+	movl %r10d, -4(%rbp)
+	movl -4(%rbp), %r10d
+	movl %r10d, -12(%rbp)
+	movl $2, -16(%rbp)
+	movl -16(%rbp), %r11d
+	imull -12(%rbp), %r11d
+	movl %r11d, -16(%rbp)
+	movl -16(%rbp), %r10d
+	movl %r10d, -20(%rbp)
+	addl $5, -20(%rbp)
+	movl -20(%rbp), %eax
+	movq %rbp, %rsp
+	popq %rbp
+	ret
+	movl $0, %eax
 	movq %rbp, %rsp
 	popq %rbp
 	ret

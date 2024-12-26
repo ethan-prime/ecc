@@ -57,6 +57,15 @@ ir_constant_node* ir_create_constant(int c) {
     return node;
 }
 
+ir_val_node* ir_create_const_val(int c) {
+    ir_constant_node* constant = ir_create_constant(c);
+    ir_val_node* val = MALLOC(ir_val_node);
+    val->type = IR_CONSTANT;
+    val->val.constant = constant;
+    
+    return val;
+}
+
 ir_val_node* ir_create_var(char* identifier) {
     ir_var_node* node = MALLOC(ir_var_node);
     node->identifier = identifier;
@@ -203,6 +212,18 @@ ir_binary_op binary_op_to_ir(binary_op op) {
     }
 }
 
+ir_val_node* variable_to_ir(variable_node* var) {
+    return ir_create_var(var->identifier);
+}
+
+ir_val_node* assign_to_ir(assign_node* assign, list(ir_instruction_node *)* instructions) {
+    ir_val_node* res = expr_to_ir(assign->expr, instructions);
+    ir_val_node* dest = ir_create_var(assign->lvalue->expr.variable->identifier);
+    ir_instruction_node* copy = ir_create_copy_instr(res, dest);
+    list_append(instructions, (void*)copy);
+    return dest;
+}
+
 // appends instructions to generate expr -> ir, returns ir_val_node with DEST ir val.
 ir_val_node* expr_to_ir(expr_node* expr, list(ir_instruction_node *)* instructions) {
     if (expr->type == EXPR_CONSTANT) {
@@ -269,33 +290,77 @@ ir_val_node* expr_to_ir(expr_node* expr, list(ir_instruction_node *)* instructio
         list_append(instructions, (void*)binary_instr);
 
         return dest;
+    } else if (expr->type == EXPR_VARIABLE) {
+        return variable_to_ir(expr->expr.variable);
+    } else if (expr->type == EXPR_ASSIGN) {
+        ir_val_node* res = assign_to_ir(expr->expr.assign, instructions);
+        return res;
     }
     // invalid instruction, unreachable...
     return NULL;
 }
 
 // STATEMENTS:
-list(ir_instruction_node *)* return_to_ir(return_node *ret) {
-    list(ir_instruction_node*)* instrs = list_init();
+void return_to_ir(return_node *ret, list(ir_instruction_node*)* instrs) {
     ir_val_node* res = expr_to_ir(ret->expr, instrs);
     ir_return_node* ret_node = ir_create_return_node(res);
     ir_instruction_node* ret_instr = MALLOC(ir_instruction_node);
     ret_instr->type = IR_INSTR_RET;
     ret_instr->instruction.ret = ret_node;
     list_append(instrs, (void*)ret_instr);
-    return instrs;
+}
+
+void add_return_0(list(ir_instruction_node*)* instrs) {
+    ir_return_node* ret_node = ir_create_return_node(ir_create_const_val(0));
+    ir_instruction_node* i = MALLOC(ir_instruction_node);
+    i->type = IR_INSTR_RET;
+    i->instruction.ret = ret_node;
+    list_append(instrs, (void*)i);
 }
 
 list(ir_instruction_node *)* statement_to_ir(statement_node *stmt) {
     // right now, we only have return statements
-    return return_to_ir(stmt->stmt.ret);
+    list(ir_instruction_node*)* instrs = list_init();
+    if (stmt->type == STMT_RET) {
+        return_to_ir(stmt->stmt.ret, instrs);
+    } else if (stmt->type == STMT_EXPR) {
+        expr_to_ir(stmt->stmt.expr, instrs);
+    } // null stmt has no instrs...
+    return instrs;
+}
+
+list(ir_instruction_node*)* declaration_to_ir(declaration_node* declare) {
+    list(ir_instruction_node*)* instrs = list_init();
+    if (declare->init != NULL) {
+        // handle this like an assignment
+        ir_val_node* res = expr_to_ir(declare->init, instrs);
+        ir_val_node* dest = ir_create_var(declare->identifier);
+        ir_instruction_node* copy = ir_create_copy_instr(res, dest);
+        list_append(instrs, (void*)copy);
+    }
+    return instrs;
+}
+
+list(ir_instruction_node*)* block_item_to_ir(block_item_node* block_item) {
+    if (block_item->type == BLOCK_DECLARE) {
+        return declaration_to_ir(block_item->item.declare);
+    } else {
+        return statement_to_ir(block_item->item.stmt);
+    }
 }
 
 ir_function_node* function_to_ir(function_node *function) {
     ir_function_node* node = MALLOC(ir_function_node);
-
     node->identifier = function->identifier;
-    node->instructions = statement_to_ir(function->body);
+    
+    node->instructions = list_init(); // for function instructions
+    
+    for (int i = 0; i < function->body->len; i++) {
+        block_item_node* block_item = (block_item_node*)list_get(function->body, i);
+        list_concat(node->instructions, block_item_to_ir(block_item)); // add instrs to body...
+    }
+
+    add_return_0(node->instructions); // in case the function forgets a return value, return 0. c standard
 
     return node;
 }

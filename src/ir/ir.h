@@ -140,15 +140,19 @@ typedef struct ir_program_node
 // used for creating temperorary variables
 char* ir_make_temp_var();
 
-// appends instructions to generate expr -> ir, returns ir_val_node with DEST ir val.
-ir_val_node* expr_to_ir(expr_node* expr, list(ir_instruction_node *)* instructions);
-
 ir_program_node* program_to_ir(program_node *program);
 ir_function_node* function_to_ir(function_node *function);
-list(ir_instruction_node *)* statement_to_ir(statement_node *stmt);
+
+list(ir_instruction_node*)* declaration_to_ir(declaration_node* declare);
 
 // STATEMENTS:
-list(ir_instruction_node *)* return_to_ir(return_node *ret);
+list(ir_instruction_node *)* statement_to_ir(statement_node *stmt);
+void return_to_ir(return_node *ret, list(ir_instruction_node*)* instrs);
+// appends instructions to generate expr -> ir, returns ir_val_node with DEST ir val.
+ir_val_node* assign_to_ir(assign_node* assign, list(ir_instruction_node *)* instructions);
+ir_val_node* expr_to_ir(expr_node* expr, list(ir_instruction_node *)* instructions);
+
+list(ir_instruction_node*)* block_item_to_ir(block_item_node* block_item);
 
 // prints TAC AST.
 void ir_print_program(ir_program_node* program_ir);

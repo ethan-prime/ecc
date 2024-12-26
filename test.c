@@ -1,6 +1,6 @@
 int main() {
-    int a = 3;
-    int c;
-    int b = c = 4;
-    return 2*a;
+    int a = 2;
+    int b;
+    b = a = 3 >= a;
+    return 2*b + 5;
 }
