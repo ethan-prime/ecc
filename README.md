@@ -2,9 +2,11 @@
 Ethan's C Compiler, written in C!
 
 ## Status
+```
 It can compile arbitrary variable assignments and return expressions that consist of integers. See examples below!
-All binary operators supported, including compounds such as +=, */, &=, etc.
+All binary operators supported, including compounds such as +=, *=, &=, etc.
 ++ and -- supported (extremely annoying to implement, lol)
+```
 
 ```c
 int main() {
