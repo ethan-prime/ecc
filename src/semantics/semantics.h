@@ -6,8 +6,8 @@
 #pragma once
 
 // used for throwing compiler errors
-void semantic_error_declared_twice(char* identifier);
-void semantic_error_undefined(char* identifier);
+void semantic_error_declared_twice(char* identifier, variablemap* vm);
+void semantic_error_undefined(char* identifier, variablemap* vm);
 void semantic_error(char* message);
 
 // look for invalid accesses, replace user-defined variables with global, temp vars.

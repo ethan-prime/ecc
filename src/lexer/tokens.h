@@ -35,6 +35,16 @@ typedef enum {
     PIPE_PIPE,
     LEFT_SHIFT,
     RIGHT_SHIFT,
+    PLUS_EQUAL,
+    HYPHEN_EQUAL,
+    ASTERISK_EQUAL,
+    FORWARD_SLASH_EQUAL,
+    PERCENT_EQUAL,
+    AMPERSAND_EQUAL,
+    PIPE_EQUAL,
+    CARAT_EQUAL,
+    LEFT_SHIFT_EQUAL,
+    RIGHT_SHIFT_EQUAL,
 } token_id;
 
 typedef union {

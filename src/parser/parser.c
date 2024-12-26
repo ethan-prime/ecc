@@ -130,10 +130,50 @@ expr_node* parse_factor(token_queue* tq) {
     return node;
 }
 
+// returns 1 if the token is a compound assignment token,
+// such as +=, -=, *=, &=, etc. sets *op to its corresponding operator.
+int is_compound_assign(token* tok, binary_op* op) {
+    token_id id = tok->id;
+    if (id == PLUS_EQUAL) {
+        *op = ADD;
+        return 1;
+    } else if (id == HYPHEN_EQUAL) {
+        *op = SUBTRACT;
+        return 1;
+    } else if (id == ASTERISK_EQUAL) {
+        *op = MULTIPLY;
+        return 1;
+    } else if (id == FORWARD_SLASH_EQUAL) {
+        *op = DIVIDE;
+        return 1;
+    } else if (id == PERCENT_EQUAL) {
+        *op = REMAINDER;
+        return 1;
+    } else if (id == AMPERSAND_EQUAL) {
+        *op = BITWISE_AND;
+        return 1;
+    } else if (id == PIPE_EQUAL) {
+        *op = BITWISE_OR;
+        return 1;
+    } else if (id == CARAT_EQUAL) {
+        *op = BITWISE_XOR;
+        return 1;
+    } else if (id == LEFT_SHIFT_EQUAL) {
+        *op = BITWISE_LEFT_SHIFT;
+        return 1;
+    } else if (id == RIGHT_SHIFT_EQUAL) {
+        *op = BITWISE_RIGHT_SHIFT;
+        return 1;
+    } 
+    return 0;
+}
+
 int is_binary_op(token* tok) {
     token_id id = tok->id;
     if (id == PLUS || id == HYPHEN || id == ASTERISK || id == FORWARD_SLASH || id == PERCENT || id == PERCENT || id == AMPERSAND || id == PIPE || id == CARAT || id == LEFT_SHIFT || id == RIGHT_SHIFT
-        || id == AMPERSAND_AMPERSAND || id == PIPE_PIPE || id == EQUAL_EQUAL || id == EXCLAM_EQUAL || id == LESS_THAN || id == LESS_THAN_EQUAL || id == GREATER_THAN || id == GREATER_THAN_EQUAL || id == EQUAL) {
+        || id == AMPERSAND_AMPERSAND || id == PIPE_PIPE || id == EQUAL_EQUAL || id == EXCLAM_EQUAL || id == LESS_THAN || id == LESS_THAN_EQUAL || id == GREATER_THAN || id == GREATER_THAN_EQUAL || id == EQUAL
+        || id == PLUS_EQUAL || id == HYPHEN_EQUAL || id == ASTERISK_EQUAL || id == FORWARD_SLASH_EQUAL || id == PERCENT_EQUAL || id == AMPERSAND_EQUAL || id == PIPE_EQUAL || id == CARAT_EQUAL
+        || id == LEFT_SHIFT_EQUAL || id == RIGHT_SHIFT_EQUAL) {
         return 1;
     }
     return 0;
@@ -246,15 +286,110 @@ int precedence(token* tok) {
             return PREC_GTE;
         case EQUAL:
             return PREC_ASSIGN;
+        case PLUS_EQUAL:
+            return PREC_ASSIGN;
+        case HYPHEN_EQUAL:
+            return PREC_ASSIGN;
+        case ASTERISK_EQUAL:
+            return PREC_ASSIGN;
+        case FORWARD_SLASH_EQUAL:
+            return PREC_ASSIGN;
+        case PERCENT_EQUAL:
+            return PREC_ASSIGN;
+        case AMPERSAND_EQUAL:
+            return PREC_ASSIGN;
+        case PIPE_EQUAL:
+            return PREC_ASSIGN;
+        case CARAT_EQUAL:
+            return PREC_ASSIGN;
+        case LEFT_SHIFT_EQUAL:
+            return PREC_ASSIGN;
+        case RIGHT_SHIFT_EQUAL:
+            return PREC_ASSIGN;
         default:
             return -1;
     }
+}
+
+assign_node* assign_node_copy(assign_node* assign) {
+    assign_node* node = MALLOC(assign_node);
+    node->lvalue = expr_node_copy(assign->lvalue);
+    node->expr = expr_node_copy(assign->expr);
+    return node;
+}
+
+binary_node* binary_node_copy(binary_node* binary) {
+    binary_node* node = MALLOC(binary_node);
+    node->lhs = expr_node_copy(binary->lhs);
+    node->rhs = expr_node_copy(binary->rhs);
+    node->op = binary->op;
+    return node;
+}
+
+constant_node* constant_node_copy(constant_node* constant) {
+    constant_node* node = MALLOC(constant_node);
+    node->val = constant->val;
+    return node;
+}
+
+unary_node* unary_node_copy(unary_node* unary) {
+    unary_node* node = MALLOC(unary_node);
+    node->op = unary->op;
+    node->expr = expr_node_copy(unary->expr);
+    return node;
+}
+
+variable_node* variable_node_copy(variable_node* var) {
+    variable_node* node = MALLOC(variable_node);
+    node->identifier = var->identifier;
+    return node;
+}
+
+// copies an expr node and returns a ptr to it.
+// useful for parse_compound_assign, where lhs points
+// to the same place in memory and semantic analysis will change 
+// a = a + 1 to a.0 = a.0 + 1 and then try to check if a.0 is defined, which of course it isnt.
+// thats a temp var.
+expr_node* expr_node_copy(expr_node* expr) {
+    expr_node* new_expr = MALLOC(expr_node);
+    new_expr->type = expr->type;
+    if (expr->type == EXPR_ASSIGN) {
+        new_expr->expr.assign = assign_node_copy(expr->expr.assign);
+    } else if (expr->type == EXPR_BINARY) {
+        new_expr->expr.binary_expr = binary_node_copy(expr->expr.binary_expr);
+    } else if (expr->type == EXPR_CONSTANT) {
+        new_expr->expr.constant = constant_node_copy(expr->expr.constant);
+    } else if (expr->type == EXPR_UNARY) {
+        new_expr->expr.unary_expr = unary_node_copy(expr->expr.unary_expr);
+    } else if (expr->type == EXPR_VARIABLE) {
+        new_expr->expr.variable = variable_node_copy(expr->expr.variable);
+    }
+    return new_expr;
+}
+
+expr_node* parse_compound_assign(token_queue* tq, expr_node* lhs) {
+    // a += 1
+    // a = a + 1
+    // assign(lhs, parse_expr(lhs <op> rhs)
+    binary_op op;
+    if (!is_compound_assign(token_queue_cur(tq), &op)) {
+        parser_error("a coumpound assignment token", token_queue_cur(tq));
+    }
+    token_queue_deq(tq); // eat the operator
+    expr_node* rhs = parse_expr(tq, PREC_ASSIGN); // get the rhs expr expr(1). right-to-left associativity, so just precedence + 0.
+    expr_node* binary_expr = create_binary_expr(op, expr_node_copy(lhs), rhs); // expr(a + 1). we need a copy so semantics doesn't mess up...
+    expr_node* assign = create_assign(lhs, binary_expr); // assign(expr(a), expr(a + 1))
+    return assign;
 }
 
 expr_node* parse_expr(token_queue* tq, int min_precedence) {
     expr_node* lhs = parse_factor(tq);
     token* cur = token_queue_cur(tq);
     while (is_binary_op(cur) && precedence(cur) >= min_precedence) {
+        binary_op dummy; // we dont need this at all, just for function call.
+        if (is_compound_assign(token_queue_cur(tq), &dummy)) {
+            return parse_compound_assign(tq, lhs);
+        }
         if (token_queue_cur(tq)->id == EQUAL) {
             // we need to be right-associative
             token_queue_deq(tq);

@@ -11,15 +11,19 @@ void semantic_error(char* message) {
     exit(1);
 }
 
-void semantic_error_declared_twice(char* identifier) {
+void semantic_error_declared_twice(char* identifier, variablemap* vm) {
     printf("***semantic error:***\n");
     printf("variable %s redeclared\n", identifier);
+    printf("variable map at exit:\n");
+    variablemap_print(vm);
     exit(1);
 }
 
-void semantic_error_undefined(char* identifier) {
+void semantic_error_undefined(char* identifier, variablemap* vm) {
     printf("***semantic error:***\n");
     printf("variable %s undefined\n", identifier);
+    printf("variable map at exit:\n");
+    variablemap_print(vm);
     exit(1);
 }
 
@@ -36,7 +40,7 @@ void resolve_expr(variablemap* vm, expr_node* expr) {
     } else if (expr->type == EXPR_VARIABLE) {
         char* res = variablemap_get(vm, expr->expr.variable->identifier);
         if (res == NULL) {
-            semantic_error_undefined(expr->expr.variable->identifier);
+            semantic_error_undefined(expr->expr.variable->identifier, vm);
         }
         // set it to new temp variable
         expr->expr.variable->identifier = res;
@@ -52,7 +56,7 @@ void resolve_expr(variablemap* vm, expr_node* expr) {
 
 void resolve_declaration(variablemap* vm, declaration_node* declare) {
     if (variablemap_get(vm, declare->identifier)) {
-        semantic_error_declared_twice(declare->identifier);
+        semantic_error_declared_twice(declare->identifier, vm);
     }
 
     char* prefix = (char*)malloc(sizeof(char)*(strlen(declare->identifier)+2)); // . and \0

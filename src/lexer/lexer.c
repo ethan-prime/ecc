@@ -139,41 +139,77 @@ token* lexer_next_token(lexer_t* lexer) {
         t->id = TILDE;
         lexer_read_char(lexer);
     } else if (lexer->cur_char == '+') {
-        t->id = PLUS;
         lexer_read_char(lexer);
+        if (lexer->cur_char == '=') {
+            t->id = PLUS_EQUAL;
+            lexer_read_char(lexer);
+        } else {
+            t->id = PLUS;
+        }
     } else if (lexer->cur_char == '*') {
-        t->id = ASTERISK;
         lexer_read_char(lexer);
+        if (lexer->cur_char == '=') {
+            t->id = ASTERISK_EQUAL;
+            lexer_read_char(lexer);
+        } else {
+            t->id = ASTERISK;
+        }
     } else if (lexer->cur_char == '/') {
-        t->id = FORWARD_SLASH;
         lexer_read_char(lexer);
+        if (lexer->cur_char == '=') {
+            t->id = FORWARD_SLASH_EQUAL;
+            lexer_read_char(lexer);
+        } else {
+            t->id = FORWARD_SLASH;
+        }
     } else if (lexer->cur_char == '%') {
-        t->id = PERCENT;
         lexer_read_char(lexer);
+        if (lexer->cur_char == '=') {
+            t->id = PERCENT_EQUAL;
+            lexer_read_char(lexer);
+        } else {
+            t->id = PERCENT;
+        }
     } else if (lexer->cur_char == '&') {
         lexer_read_char(lexer);
         if (lexer->cur_char == '&') {
             t->id = AMPERSAND_AMPERSAND;
+            lexer_read_char(lexer);
+        } else if (lexer->cur_char == '=' ) {
+            t->id = AMPERSAND_EQUAL;
             lexer_read_char(lexer);
         } else {
             t->id = AMPERSAND;
         }
     } else if (lexer->cur_char == '|') {
         lexer_read_char(lexer);
-        if (lexer->cur_char == '|') {
+        if (lexer->cur_char == '&') {
             t->id = PIPE_PIPE;
+            lexer_read_char(lexer);
+        } else if (lexer->cur_char == '=' ) {
+            t->id = PIPE_EQUAL;
             lexer_read_char(lexer);
         } else {
             t->id = PIPE;
         }
     } else if (lexer->cur_char == '^') {
-        t->id = CARAT;
         lexer_read_char(lexer);
+        if (lexer->cur_char == '=') {
+            t->id = CARAT_EQUAL;
+            lexer_read_char(lexer);
+        } else {
+            t->id = CARAT;
+        }
     } else if (lexer->cur_char == '<') {
         lexer_read_char(lexer);
         if (lexer->cur_char == '<') {
-            t->id = LEFT_SHIFT;
             lexer_read_char(lexer);
+            if (lexer->cur_char == '=') {
+                t->id = LEFT_SHIFT_EQUAL;
+                lexer_read_char(lexer);
+            } else {
+                t->id = LEFT_SHIFT;
+            }
         } else if (lexer->cur_char == '=') {
             t->id = LESS_THAN_EQUAL;
             lexer_read_char(lexer);
@@ -183,8 +219,13 @@ token* lexer_next_token(lexer_t* lexer) {
     } else if (lexer->cur_char == '>') {
         lexer_read_char(lexer);
         if (lexer->cur_char == '>') {
-            t->id = RIGHT_SHIFT;
             lexer_read_char(lexer);
+            if (lexer->cur_char == '=') {
+                t->id = RIGHT_SHIFT_EQUAL;
+                lexer_read_char(lexer);
+            } else {
+                t->id = RIGHT_SHIFT;
+            }
         } else if (lexer->cur_char == '=') {
             t->id = GREATER_THAN_EQUAL;
             lexer_read_char(lexer);
@@ -289,7 +330,27 @@ void print_token(token t) {
         case RIGHT_SHIFT:
             printf(">>"); break;
         case LEFT_SHIFT:
-            printf("<<"); break;     
+            printf("<<"); break;
+        case PLUS_EQUAL:
+            printf("+="); break;
+        case HYPHEN_EQUAL:
+            printf("-="); break;
+        case ASTERISK_EQUAL:
+            printf("*="); break;
+        case FORWARD_SLASH_EQUAL:
+            printf("/="); break;
+        case PERCENT_EQUAL:
+            printf("%%="); break;
+        case AMPERSAND_EQUAL:
+            printf("&="); break;
+        case PIPE_EQUAL:
+            printf("|="); break;
+        case CARAT_EQUAL:
+            printf("^="); break;
+        case LEFT_SHIFT_EQUAL:
+            printf("<<="); break;
+        case RIGHT_SHIFT_EQUAL:
+            printf(">>="); break;                                  
         default:
             printf("UNKNOWN TOKEN\n");
             exit(1);

@@ -15,3 +15,4 @@ typedef list(variablemap_node*) variablemap;
 variablemap* variablemap_init();
 char* variablemap_get(variablemap* vm, char* key);
 void variablemap_add(variablemap* vm, char* key, char* value);
+void variablemap_print(variablemap* vm);

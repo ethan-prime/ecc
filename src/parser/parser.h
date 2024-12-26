@@ -15,6 +15,8 @@ unary_node* parse_unary_expr(token_queue* tq);
 expr_node* parse_factor(token_queue* tq);
 expr_node* parse_expr(token_queue* tq, int min_precedence);
 
+expr_node* expr_node_copy(expr_node* expr); // used in parsing
+
 return_node* parse_return(token_queue* tq);
 
 statement_node* parse_statement(token_queue* tq);

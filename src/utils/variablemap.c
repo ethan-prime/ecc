@@ -1,6 +1,7 @@
 #include "variablemap.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 variablemap* variablemap_init() {
     return (variablemap *)malloc(sizeof(variablemap));
@@ -23,4 +24,11 @@ void variablemap_add(variablemap* vm, char* key, char* value) {
     node->value = value;
 
     list_append(vm, (void*)node);
+}
+
+void variablemap_print(variablemap* vm) {
+    for (int i = 0; i < vm->len; i++) {
+        variablemap_node* node = (variablemap_node*)list_get(vm, i);
+        printf("%s -> %s\n", node->key, node->value);    
+    }
 }
