@@ -58,8 +58,8 @@ int main(int argc, char** argv) {
     printf("Sucessfully lexed program...\n");
 
     program_node* program = parse_program(tq);
-    print_ast(program);
-    
+
+    // semantic pass
     resolve_program(program);
 
     printf("Parsed program:\n");

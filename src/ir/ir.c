@@ -173,9 +173,9 @@ ir_unary_op unary_op_to_ir(unary_op op) {
 }
 
 ir_binary_op binary_op_to_ir(binary_op op) {
-    if (op == ADD) {
+    if (op == ADD || op == POSTFIX_INC || op == PREFIX_INC) {
         return IR_ADD;
-    } else if (op == SUBTRACT) {
+    } else if (op == SUBTRACT || op == POSTFIX_DEC || op == PREFIX_DEC) {
         return IR_SUBTRACT;
     } else if (op == MULTIPLY) {
         return IR_MULTIPLY;
@@ -216,7 +216,31 @@ ir_val_node* variable_to_ir(variable_node* var) {
     return ir_create_var(var->identifier);
 }
 
+// <expr>++
+// we need to return the before val.
+ir_val_node* postfix_to_ir(assign_node* assign, list(ir_instruction_node *)* instructions) {
+    // we know this is a "binary expression" with an lhs of a variable if this is a postfix conversion.
+    // so, lets move the before value into a temp register and save that for later 
+    ir_val_node* src = ir_create_var(assign->lvalue->expr.variable->identifier);
+    ir_val_node* temp = ir_create_var(ir_make_temp_var());
+    // save the before value to return for this expression
+    ir_instruction_node* copy1 = ir_create_copy_instr(src, temp);
+
+    // now we do the rest of the work: expr evaluation and variable assignmnet
+    ir_val_node* res = expr_to_ir(assign->expr, instructions);
+    ir_instruction_node* copy2 = ir_create_copy_instr(res, src); // src is the dest, here...
+
+    list_append(instructions, (void*)copy1);
+    list_append(instructions, (void*)copy2);
+
+    return temp; // return the value before the increment that we saved
+}
+
 ir_val_node* assign_to_ir(assign_node* assign, list(ir_instruction_node *)* instructions) {
+    // first, let's check if this assignment uses the postfix operator...
+    if (assign->expr->type == EXPR_BINARY && (assign->expr->expr.binary_expr->op == POSTFIX_INC || assign->expr->expr.binary_expr->op == POSTFIX_DEC)) {
+        return postfix_to_ir(assign, instructions);
+    }
     ir_val_node* res = expr_to_ir(assign->expr, instructions);
     ir_val_node* dest = ir_create_var(assign->lvalue->expr.variable->identifier);
     ir_instruction_node* copy = ir_create_copy_instr(res, dest);

@@ -38,6 +38,10 @@ typedef enum {
     LOGICAL_GT,
     LOGICAL_LTE,
     LOGICAL_GTE,
+    PREFIX_INC, // ++a
+    POSTFIX_INC, // a++
+    PREFIX_DEC, // --a
+    POSTFIX_DEC, // a--
 } binary_op;
 
 typedef struct {

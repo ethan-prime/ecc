@@ -143,6 +143,9 @@ token* lexer_next_token(lexer_t* lexer) {
         if (lexer->cur_char == '=') {
             t->id = PLUS_EQUAL;
             lexer_read_char(lexer);
+        } else if (lexer->cur_char == '+') {
+            t->id = PLUS_PLUS;
+            lexer_read_char(lexer);
         } else {
             t->id = PLUS;
         }
@@ -183,7 +186,7 @@ token* lexer_next_token(lexer_t* lexer) {
         }
     } else if (lexer->cur_char == '|') {
         lexer_read_char(lexer);
-        if (lexer->cur_char == '&') {
+        if (lexer->cur_char == '|') {
             t->id = PIPE_PIPE;
             lexer_read_char(lexer);
         } else if (lexer->cur_char == '=' ) {
@@ -234,7 +237,10 @@ token* lexer_next_token(lexer_t* lexer) {
         }
     } else if (lexer->cur_char == '-') {
         lexer_read_char(lexer);
-        if (lexer->cur_char == '-') {
+        if (lexer->cur_char == '=') {
+            t->id = HYPHEN_EQUAL;
+            lexer_read_char(lexer);
+        } else if (lexer->cur_char == '-') {
             t->id = HYPHEN_HYPHEN;
             lexer_read_char(lexer);
         } else {
@@ -350,7 +356,9 @@ void print_token(token t) {
         case LEFT_SHIFT_EQUAL:
             printf("<<="); break;
         case RIGHT_SHIFT_EQUAL:
-            printf(">>="); break;                                  
+            printf(">>="); break;   
+        case PLUS_PLUS:
+            printf("++"); break;                             
         default:
             printf("UNKNOWN TOKEN\n");
             exit(1);

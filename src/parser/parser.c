@@ -34,6 +34,17 @@ constant_node* parse_constant(token_queue* tq) {
     return node;
 }
 
+expr_node* create_constant_expr(int c) {
+    constant_node* node = MALLOC(constant_node);
+    node->val = c;
+    
+    expr_node* expr = MALLOC(expr_node);
+    expr->type = EXPR_CONSTANT;
+    expr->expr.constant = node;
+
+    return expr;
+}
+
 int is_unary_op(token* tok) {
     return (tok->id == HYPHEN || tok->id == TILDE || tok->id == EXCLAM);
 }
@@ -130,6 +141,10 @@ expr_node* parse_factor(token_queue* tq) {
     return node;
 }
 
+int is_prefix_postfix_op(token* tok) {
+    return (tok->id == PLUS_PLUS || tok->id == HYPHEN_HYPHEN); 
+}
+
 // returns 1 if the token is a compound assignment token,
 // such as +=, -=, *=, &=, etc. sets *op to its corresponding operator.
 int is_compound_assign(token* tok, binary_op* op) {
@@ -164,7 +179,7 @@ int is_compound_assign(token* tok, binary_op* op) {
     } else if (id == RIGHT_SHIFT_EQUAL) {
         *op = BITWISE_RIGHT_SHIFT;
         return 1;
-    } 
+    }
     return 0;
 }
 
@@ -367,6 +382,37 @@ expr_node* expr_node_copy(expr_node* expr) {
     return new_expr;
 }
 
+// ++<expr>
+expr_node* parse_prefix(token_queue* tq) {
+    if (!is_prefix_postfix_op(token_queue_cur(tq))) {
+        parser_error("a ++ or -- operator", token_queue_cur(tq));
+    }
+    binary_op op = (token_queue_cur(tq)->id == PLUS_PLUS) ? PREFIX_INC : PREFIX_DEC;
+    token_queue_deq(tq);
+    expr_node* expr = parse_expr(tq, PREC_PREFIX);
+    // remember, this is like (expr) = (expr <PREFIX_OP> 1)
+    expr_node* binary = create_binary_expr(op, expr_node_copy(expr), create_constant_expr(1));
+    expr_node* assign = create_assign(expr, binary);
+    return assign;
+}
+
+// <expr>++
+// the trick here is that, by this point, we will have just finished parsing an expr.
+// by seeing the ++ right after, we know this must be a postfix operation.
+// this differs from prefix as we will first encounter a prefix token before an expr is 
+// starting to be parsed. :)
+expr_node* parse_postfix(token_queue* tq, expr_node* expr) {
+    if (!is_prefix_postfix_op(token_queue_cur(tq))) {
+        parser_error("a ++ or -- operator", token_queue_cur(tq));
+    }
+    binary_op op = (token_queue_cur(tq)->id == PLUS_PLUS) ? POSTFIX_INC : POSTFIX_DEC;
+    token_queue_deq(tq);
+    // remember, this is like (expr) = (expr <POSTFIX_OP> 1)
+    expr_node* binary = create_binary_expr(op, expr_node_copy(expr), create_constant_expr(1));
+    expr_node* assign = create_assign(expr, binary);
+    return assign;
+}
+
 expr_node* parse_compound_assign(token_queue* tq, expr_node* lhs) {
     // a += 1
     // a = a + 1
@@ -382,9 +428,20 @@ expr_node* parse_compound_assign(token_queue* tq, expr_node* lhs) {
     return assign;
 }
 
+// THIS FUNCTION IS TRASH I NEED TO CLEAN THIS UP LATER LOLLLLLL
+// works for now, though.
 expr_node* parse_expr(token_queue* tq, int min_precedence) {
-    expr_node* lhs = parse_factor(tq);
+    expr_node* lhs;
+    // we know this will be a prefix operation expression
+    if (is_prefix_postfix_op(token_queue_cur(tq))) {
+        lhs = parse_prefix(tq);
+    } else {
+        lhs = parse_factor(tq);
+    }
+    
     token* cur = token_queue_cur(tq);
+
+    binary_loop:
     while (is_binary_op(cur) && precedence(cur) >= min_precedence) {
         binary_op dummy; // we dont need this at all, just for function call.
         if (is_compound_assign(token_queue_cur(tq), &dummy)) {
@@ -401,6 +458,13 @@ expr_node* parse_expr(token_queue* tq, int min_precedence) {
             lhs = create_binary_expr(op, lhs, rhs);
         }
         cur = token_queue_cur(tq);
+    }
+
+    // we know this is a postfix operation expression!
+    if (is_prefix_postfix_op(token_queue_cur(tq))) {
+        lhs = parse_postfix(tq, lhs);
+        cur = token_queue_cur(tq);
+        goto binary_loop;
     }
 
     return lhs;

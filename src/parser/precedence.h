@@ -1,4 +1,7 @@
 // precedence definitions for expr parsing
+#define PREC_PREFIX 14
+#define PREC_POSTFIX 14
+
 #define PREC_MULTIPLY 13
 #define PREC_DIVIDE 13
 #define PREC_REMAINDER 13

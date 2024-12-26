@@ -50,6 +50,14 @@ void print_binop(binary_op op) {
         printf(">");
     } else if (op == LOGICAL_GTE) {
         printf(">=");
+    } else if (op == PREFIX_INC) {
+        printf("++prefix");
+    } else if (op == POSTFIX_INC) {
+        printf("postfix++");
+    } else if (op == PREFIX_DEC) {
+        printf("--prefix");
+    } else if (op == POSTFIX_DEC) {
+        printf("postfix--");
     }
 }
 
@@ -106,6 +114,7 @@ void print_statement(statement_node* stmt, int depth) {
             break;
         case STMT_EXPR:
             print_expr(stmt->stmt.expr, depth);
+            break;
     }
 }
 

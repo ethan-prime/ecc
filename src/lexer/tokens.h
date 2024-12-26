@@ -45,6 +45,8 @@ typedef enum {
     CARAT_EQUAL,
     LEFT_SHIFT_EQUAL,
     RIGHT_SHIFT_EQUAL,
+    PLUS_PLUS,
+    MINUS_MINUS,
 } token_id;
 
 typedef union {
