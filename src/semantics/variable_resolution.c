@@ -83,6 +83,39 @@ void resolve_if(variablemap* vm, if_node* if_stmt) {
     }
 }
 
+void resolve_while(variablemap* vm, while_node* while_stmt) {
+    resolve_expr(vm, while_stmt->condition);
+    resolve_statement(vm, while_stmt->body);
+}
+
+void resolve_do_while(variablemap* vm, do_while_node* do_while_stmt) {
+    resolve_statement(vm, do_while_stmt->body);
+    resolve_expr(vm, do_while_stmt->condition);
+}
+
+void resolve_optional_expr(variablemap* vm, expr_node* expr) {
+    if (expr == NULL) {
+        return;
+    }
+    resolve_expr(vm, expr);
+}
+
+void resolve_for_init(variablemap* vm, for_init_node* for_init) {
+    if (for_init->type == INIT_DECL) {
+        resolve_declaration(vm, for_init->for_init.init_declare);
+    } else {
+        resolve_optional_expr(vm, for_init->for_init.init_expr);
+    }
+}
+
+void resolve_for(variablemap* vm, for_node* for_stmt) {
+    variablemap* child_vm = variablemap_copy(vm);
+    resolve_for_init(child_vm, for_stmt->init);
+    resolve_optional_expr(child_vm, for_stmt->condition);
+    resolve_optional_expr(child_vm, for_stmt->final_expr);
+    resolve_statement(child_vm, for_stmt->body);
+}
+
 void resolve_statement(variablemap* vm, statement_node* statement) {
     if (statement->type == STMT_RET) {
         resolve_expr(vm, statement->stmt.ret->expr);
@@ -93,8 +126,14 @@ void resolve_statement(variablemap* vm, statement_node* statement) {
     } else if (statement->type == STMT_COMPOUND) {
         variablemap* child_vm = variablemap_copy(vm);
         resolve_block(child_vm, statement->stmt.compound->block);
+    } else if (statement->type == STMT_WHILE) {
+        resolve_while(vm, statement->stmt.while_node);
+    } else if (statement->type == STMT_DO_WHILE) {
+        resolve_do_while(vm, statement->stmt.do_while_node);
+    } else if (statement->type == STMT_FOR) {
+        resolve_for(vm, statement->stmt.for_node);
     }
-    // null statement needs no resolution
+    // null, break, and continue statements need no resolution
 }
 
 void resolve_block_item(variablemap* vm, block_item_node* block_item) {

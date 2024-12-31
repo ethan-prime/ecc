@@ -173,7 +173,7 @@ void print_break(break_node* break_node, int depth) {
 
 void print_continue(continue_node* continue_node, int depth) {
     print_tabs(depth);
-    printf("Break[%s]\n",continue_node->loop_label);
+    printf("Continue[%s]\n",continue_node->loop_label);
 }
 
 void print_while(while_node* while_node, int depth) {

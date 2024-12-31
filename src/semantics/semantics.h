@@ -19,3 +19,9 @@ void resolve_block(variablemap* vm, block_node* block);
 void resolve_function(function_node* function);
 void resolve_program(program_node* program);
 #define semantic_pass1(p) (resolve_program(p)) // variable resolution pass
+
+void label_statement(statement_node* statement, char* loop_label);
+void label_block(block_node* block, char* loop_label);
+void label_function(function_node* func);
+void label_program(program_node* program);
+#define semantic_pass2(p) (label_program(p)) // loop labeling pass

@@ -61,6 +61,7 @@ int main(int argc, char** argv) {
 
     // semantic pass
     resolve_program(program);
+    label_program(program);
 
     printf("Parsed program:\n");
     print_ast(program);
