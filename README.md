@@ -3,9 +3,10 @@ Ethan's C Compiler, written in C!
 
 ## Status
 ```
-(new) If statements! It can compile arbitrary variable assignments and return expressions that consist of integers. See examples below!
-All binary operators supported, including compounds such as +=, *=, &=, etc.
-++ and -- supported (extremely annoying to implement, lol)
+if statements
+return statements
+local variables
+arbitrary binary expressions
 ```
 
 ```c
