@@ -11,6 +11,7 @@ lexer_t* lexer_init(char* source_file) {
     lexer_t* lexer = (lexer_t *)malloc(sizeof(lexer_t));
     lexer->input_file = source_file;
     lexer->pos = 0;
+    lexer->line_number = 1;
     return lexer;
 }
 
@@ -78,6 +79,21 @@ int is_keyword(char* str, token_id* id) {
     } else if (strcmp(str, "else") == 0) {
         *id = KEYW_ELSE;
         return 1;
+    } else if (strcmp(str, "do") == 0) {
+        *id = KEYW_DO;
+        return 1;
+    } else if (strcmp(str, "while") == 0) {
+        *id = KEYW_WHILE;
+        return 1;
+    } else if (strcmp(str, "for") == 0) {
+        *id = KEYW_FOR;
+        return 1;
+    } else if (strcmp(str, "break") == 0) {
+        *id = KEYW_BREAK;
+        return 1;
+    } else if (strcmp(str, "continue") == 0) {
+        *id = KEYW_CONTINUE;
+        return 1;
     }
     return 0;
 }
@@ -92,6 +108,9 @@ token* lexer_next_token(lexer_t* lexer) {
 
     // skip whitespace
     while (isspace(lexer->cur_char) && lexer->pos < lexer->file_size) {
+        if (lexer->cur_char == '\n') {
+            lexer->line_number++;
+        }
         lexer_read_char(lexer);
     }
 
@@ -278,7 +297,7 @@ token* lexer_next_token(lexer_t* lexer) {
         printf("UNKNOWN TOKEN ENCOUNTERED\n");
         exit(1);
     }
-
+    t->line_number = lexer->line_number;
     return t;
 }
 
@@ -378,7 +397,17 @@ void print_token(token t) {
         case COLON:
             printf(":"); break;
         case QUESTION:
-            printf("?"); break;                             
+            printf("?"); break;
+        case KEYW_DO:
+            printf("do"); break;
+        case KEYW_WHILE:
+            printf("while"); break;
+        case KEYW_FOR:
+            printf("for"); break;
+        case KEYW_BREAK:
+            printf("break"); break;
+        case KEYW_CONTINUE:
+            printf("continue"); break;                             
         default:
             printf("UNKNOWN TOKEN\n");
             exit(1);

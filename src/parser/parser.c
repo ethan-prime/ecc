@@ -19,6 +19,7 @@ void parser_error(char *expected, token *received)
     printf("expected: %s\n", expected);
     printf("received: ");
     print_token(*received);
+    printf("@ line %d\n", received->line_number);
     exit(1);
 }
 
@@ -589,6 +590,149 @@ binary_loop:
     return lhs;
 }
 
+expr_node* parse_optional_expr(token_queue* tq, token_id end_token) {
+    if (CUR(tq)->id == end_token) {
+        DEQ(tq);
+        return NULL;
+    }
+    expr_node* expr = parse_expr(tq, 0);
+    if (!expect(tq, end_token)) {
+        printf("%d\n", end_token);
+        parser_error("end token for optional expr", CUR(tq));
+    }
+    DEQ(tq);
+
+    return expr;
+}
+
+for_init_node* parse_for_init(token_queue* tq) {
+    for_init_node* for_init = MALLOC(for_init_node);
+
+    if (CUR(tq)->id == KEYW_INT) {
+        // declaration
+        for_init->type = INIT_DECL;
+        for_init->for_init.init_declare = parse_declaration(tq);
+    } else {
+        // expression
+        for_init->type = INIT_EXPR;
+        for_init->for_init.init_expr = parse_optional_expr(tq, SEMICOLON);
+    }
+
+    return for_init;
+
+}
+
+break_node* parse_break(token_queue* tq) {
+    break_node* node = MALLOC(break_node);
+
+    if (!expect(tq, KEYW_BREAK)) {
+        parser_error("break", CUR(tq));
+    }
+    DEQ(tq);
+
+    if (!expect(tq, SEMICOLON)) {
+        parser_error(";", CUR(tq));
+    }
+    DEQ(tq);
+
+    return node;
+}
+
+continue_node* parse_continue(token_queue* tq) {
+    continue_node* node = MALLOC(continue_node);
+
+    if (!expect(tq, KEYW_CONTINUE)) {
+        parser_error("break", CUR(tq));
+    }
+    DEQ(tq);
+
+    if (!expect(tq, SEMICOLON)) {
+        parser_error(";", CUR(tq));
+    }
+    DEQ(tq);
+
+    return node;
+}
+
+while_node* parse_while(token_queue* tq) {
+    if (!expect(tq, KEYW_WHILE)) {
+        parser_error("while", CUR(tq));
+    }
+    DEQ(tq);
+
+    if (!expect(tq, OPEN_PAREN)) {
+        parser_error("(", CUR(tq));
+    }
+    DEQ(tq);
+
+    while_node* node = MALLOC(while_node);
+    node->condition = parse_expr(tq, 0);
+
+    if (!expect(tq, CLOSE_PAREN)) {
+        parser_error(")", CUR(tq));
+    }
+    DEQ(tq);
+
+    node->body = parse_statement(tq);
+
+    return node;
+}
+
+do_while_node* parse_do_while(token_queue* tq) {
+    do_while_node* node = MALLOC(do_while_node);
+
+    if (!expect(tq, KEYW_DO)) {
+        parser_error("do", CUR(tq));
+    }
+    DEQ(tq);
+
+    node->body = parse_statement(tq);
+
+    if (!expect(tq, KEYW_WHILE)) {
+        parser_error("while", CUR(tq));
+    }
+    DEQ(tq);
+
+    if (!expect(tq, OPEN_PAREN)) {
+        parser_error("(", CUR(tq));
+    }
+    DEQ(tq);
+
+    node->condition = parse_expr(tq, 0);
+
+    if (!expect(tq, CLOSE_PAREN)) {
+        parser_error(")", CUR(tq));
+    }
+    DEQ(tq);
+
+    if (!expect(tq, SEMICOLON)) {
+        parser_error(")", CUR(tq));
+    }
+    DEQ(tq);
+
+    return node;
+}
+
+for_node* parse_for(token_queue* tq) {
+    if (!expect(tq, KEYW_FOR)) {
+        parser_error("for", CUR(tq));
+    }
+    DEQ(tq);
+
+    if (!expect(tq, OPEN_PAREN)) {
+        parser_error("(", CUR(tq));
+    }
+    DEQ(tq);
+
+    for_node* node = MALLOC(for_node);
+    node->init = parse_for_init(tq);
+    node->condition = parse_optional_expr(tq, SEMICOLON);
+    node->final_expr = parse_optional_expr(tq, CLOSE_PAREN);
+    node->body = parse_statement(tq);
+
+    return node;
+}
+
 return_node *parse_return(token_queue *tq)
 {
     if (!expect(tq, KEYW_RETURN))
@@ -663,7 +807,22 @@ statement_node *parse_statement(token_queue *tq)
     } else if (CUR(tq)->id == OPEN_BRACE) {
         node->type = STMT_COMPOUND;
         node->stmt.compound = parse_compound_statement(tq);
-    }
+    } else if (CUR(tq)->id == KEYW_BREAK) {
+        node->type = STMT_BREAK;
+        node->stmt.break_node = parse_break(tq);
+    } else if (CUR(tq)->id == KEYW_CONTINUE) {
+        node->type = STMT_CONTINUE;
+        node->stmt.continue_node = parse_continue(tq);
+    } else if (CUR(tq)->id == KEYW_WHILE) {
+        node->type = STMT_WHILE;
+        node->stmt.while_node = parse_while(tq);
+    } else if (CUR(tq)->id == KEYW_DO) {
+        node->type = STMT_DO_WHILE;
+        node->stmt.do_while_node = parse_do_while(tq);
+    } else if (CUR(tq)->id == KEYW_FOR) {
+        node->type = STMT_FOR;
+        node->stmt.for_node = parse_for(tq);
+    } 
     else
     {
         node->type = STMT_EXPR;

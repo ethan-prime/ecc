@@ -9,6 +9,7 @@ typedef struct lexer {
     char* buf;
     unsigned int pos;
     char cur_char;
+    int line_number;
 } lexer_t;
 
 // initializes a lexer struct and returns it.

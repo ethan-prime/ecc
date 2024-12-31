@@ -86,6 +86,11 @@ typedef struct expr_node {
     } expr;
 } expr_node;
 
+typedef struct {
+    char* identifier;
+    expr_node* init; // optional
+} declaration_node;
+
 typedef struct return_node {
     expr_node* expr;
 } return_node;
@@ -102,12 +107,58 @@ typedef struct {
     struct block_node* block;
 } compound_node;
 
+typedef struct {
+    char* loop_label;
+} break_node;
+
+typedef struct {
+    char* loop_label;
+} continue_node;
+
+typedef struct {
+    expr_node* condition;
+    struct statement_node* body;
+    char* loop_label;
+} while_node;
+
+typedef struct {
+    struct statement_node* body;
+    expr_node* condition;
+    char* loop_label;
+} do_while_node;
+
+typedef enum {
+    INIT_DECL,
+    INIT_EXPR,
+} for_init_type;
+
+typedef struct {
+    for_init_type type;
+    union {
+        declaration_node* init_declare;
+        expr_node* init_expr;
+    } for_init;
+} for_init_node;
+
+typedef struct {
+    for_init_node* init;
+    expr_node* condition;
+    expr_node* final_expr;
+    struct statement_node* body;
+    char* loop_label;
+} for_node;
+
 typedef enum {
     STMT_RET,
     STMT_EXPR,
     STMT_NULL,
     STMT_IF,
     STMT_COMPOUND,
+    STMT_BREAK,
+    STMT_CONTINUE,
+    STMT_WHILE,
+    STMT_DO_WHILE,
+    STMT_FOR,
 } statement_type;
 
 typedef struct statement_node {
@@ -117,13 +168,13 @@ typedef struct statement_node {
         expr_node* expr;
         if_node* if_stmt;
         compound_node* compound;
+        break_node* break_node;
+        continue_node* continue_node;
+        while_node* while_node;
+        do_while_node* do_while_node;
+        for_node* for_node;
     } stmt;
 } statement_node;
-
-typedef struct {
-    char* identifier;
-    expr_node* init; // optional
-} declaration_node;
 
 typedef enum {
     BLOCK_DECLARE,

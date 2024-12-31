@@ -3,11 +3,17 @@ function_definition = Function(identifier name, block body)
 block_item = S(statement) | D(declaration)
 block = Block(block_item*)
 declaration = Declaration(identifier name, exp? init)
+for_init = InitDecl(declaration) | InitExp(exp?)
 statement = Return(exp)
-        | Expression(exp)
-        | If(exp condition, statement then, statement? else)
-        | Compound(block)
-        | Null
+            | Expression(exp)
+            | If(exp condition, statement then, statement? else)
+            | Compound(block)
+            | Break
+            | Continue
+            | While(exp condition, statement body)
+            | DoWhile(statement body, exp condition)
+            | For(for_init init, exp? condition, exp? post, statement body)
+            | Null
 exp = Constant(int)
     | Var(identifier)
     | Unary(unary_operator, exp)

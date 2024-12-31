@@ -51,6 +51,11 @@ typedef enum {
     KEYW_ELSE,
     COLON, //:
     QUESTION, //?
+    KEYW_DO,
+    KEYW_WHILE,
+    KEYW_FOR,
+    KEYW_BREAK,
+    KEYW_CONTINUE,
 } token_id;
 
 typedef union {
@@ -62,4 +67,5 @@ typedef union {
 typedef struct {
     token_id id;
     token_value val;
+    int line_number;
 } token;
