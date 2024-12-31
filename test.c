@@ -1,5 +1,9 @@
 int main() {
-    int a = 1;
-    int b = 0;
-    return ((a-- && ++b) || 0);
+    int a = 10;
+    int b;
+    if (a > 10)
+        b = a = 1;
+    else
+        b = 4;
+    return a ? b ? 1 : 2 : 3;
 }

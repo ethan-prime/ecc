@@ -51,6 +51,10 @@ void resolve_expr(variablemap* vm, expr_node* expr) {
     }  else if (expr->type == EXPR_BINARY) {
         resolve_expr(vm, expr->expr.binary_expr->lhs);
         resolve_expr(vm, expr->expr.binary_expr->rhs);
+    } else if (expr->type == EXPR_TERNARY) {
+        resolve_expr(vm, expr->expr.ternary->condition);
+        resolve_expr(vm, expr->expr.ternary->condition_true);
+        resolve_expr(vm, expr->expr.ternary->condition_false);
     }
 }
 
@@ -71,11 +75,21 @@ void resolve_declaration(variablemap* vm, declaration_node* declare) {
     }
 }
 
+void resolve_if(variablemap* vm, if_node* if_stmt) {
+    resolve_expr(vm, if_stmt->condition);
+    resolve_statement(vm, if_stmt->then_stmt);
+    if (if_stmt->else_stmt != NULL) {
+        resolve_statement(vm, if_stmt->else_stmt);
+    }
+}
+
 void resolve_statement(variablemap* vm, statement_node* statement) {
     if (statement->type == STMT_RET) {
         resolve_expr(vm, statement->stmt.ret->expr);
     } else if (statement->type == STMT_EXPR) {
         resolve_expr(vm, statement->stmt.expr);
+    } else if (statement->type == STMT_IF) {
+        resolve_if(vm, statement->stmt.if_stmt);
     }
     // null statement needs no resolution
 }

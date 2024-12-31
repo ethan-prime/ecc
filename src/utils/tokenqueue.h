@@ -22,9 +22,11 @@ void token_queue_enq(token_queue* tq, token* tok);
 
 // returns head of queue, removes from queue.
 token* token_queue_deq(token_queue* tq);
+#define DEQ(tq) (token_queue_deq(tq))
 
 // returns head of queue, doesnt remove.
 token* token_queue_cur(token_queue* tq);
+#define CUR(tq) (token_queue_cur(tq))
 
 // returns two tokens into queue, doesnt remove.
 token* token_queue_peek(token_queue* tq);

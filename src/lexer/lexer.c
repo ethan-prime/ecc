@@ -72,6 +72,12 @@ int is_keyword(char* str, token_id* id) {
     } else if (strcmp(str, "return") == 0) {
         *id = KEYW_RETURN;
         return 1;
+    } else if (strcmp(str, "if") == 0) {
+        *id = KEYW_IF;
+        return 1;
+    } else if (strcmp(str, "else") == 0) {
+        *id = KEYW_ELSE;
+        return 1;
     }
     return 0;
 }
@@ -134,6 +140,12 @@ token* lexer_next_token(lexer_t* lexer) {
         lexer_read_char(lexer);
     } else if (lexer->cur_char == ';') {
         t->id = SEMICOLON;
+        lexer_read_char(lexer);
+    } else if (lexer->cur_char == ':') {
+        t->id = COLON;
+        lexer_read_char(lexer);
+    } else if (lexer->cur_char == '?') {
+        t->id = QUESTION;
         lexer_read_char(lexer);
     } else if (lexer->cur_char == '~') {
         t->id = TILDE;
@@ -358,7 +370,15 @@ void print_token(token t) {
         case RIGHT_SHIFT_EQUAL:
             printf(">>="); break;   
         case PLUS_PLUS:
-            printf("++"); break;                             
+            printf("++"); break;
+        case KEYW_IF:
+            printf("if"); break;
+        case KEYW_ELSE:
+            printf("else"); break;
+        case COLON:
+            printf(":"); break;
+        case QUESTION:
+            printf("?"); break;                             
         default:
             printf("UNKNOWN TOKEN\n");
             exit(1);

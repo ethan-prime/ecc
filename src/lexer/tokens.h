@@ -47,6 +47,10 @@ typedef enum {
     RIGHT_SHIFT_EQUAL,
     PLUS_PLUS,
     MINUS_MINUS,
+    KEYW_IF,
+    KEYW_ELSE,
+    COLON, //:
+    QUESTION, //?
 } token_id;
 
 typedef union {

@@ -26,4 +26,6 @@
 #define PREC_LOGICAL_AND 5
 #define PREC_LOGICAL_OR 4
 
+#define PREC_TERNARY 3
+
 #define PREC_ASSIGN 2

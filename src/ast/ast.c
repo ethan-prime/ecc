@@ -61,6 +61,21 @@ void print_binop(binary_op op) {
     }
 }
 
+void print_ternary(ternary_node* ternary, int depth) {
+    printf("Ternary(\n");
+    print_tabs(depth+1);
+    printf("condition=\n");
+    print_expr(ternary->condition, depth+1);
+    print_tabs(depth+1);
+    printf("condition_true=\n");
+    print_expr(ternary->condition_true, depth+1);
+    print_tabs(depth+1);
+    printf("condition_false=\n");
+    print_expr(ternary->condition_false, depth+1);
+    print_tabs(depth);
+    printf(")\n");
+}
+
 void print_expr(expr_node *expr, int depth) {
     print_tabs(depth);
     if (expr->type == EXPR_CONSTANT) {
@@ -93,6 +108,8 @@ void print_expr(expr_node *expr, int depth) {
         printf(")\n");
     } else if (expr->type == EXPR_VARIABLE) {
         printf("Var(%s)\n", expr->expr.variable->identifier);
+    } else if (expr->type == EXPR_TERNARY) {
+        print_ternary(expr->expr.ternary, depth);
     }
 }
 
@@ -100,6 +117,25 @@ void print_return(return_node *ret, int depth) {
     print_tabs(depth);
     printf("Return(\n");
     print_expr(ret->expr, depth+1);
+    print_tabs(depth);
+    printf(")\n");
+}
+
+void print_if(if_node* if_node, int depth) {
+    print_tabs(depth);
+    printf("If(\n");
+    print_tabs(depth+1);
+    printf("condition=\n");
+    print_expr(if_node->condition, depth+1);
+    print_tabs(depth+1);
+    printf("then=\n");
+    print_statement(if_node->then_stmt, depth+1);
+    if (if_node->else_stmt != NULL) {
+        // we have an else
+        print_tabs(depth+1);
+        printf("else=\n");
+        print_statement(if_node->else_stmt, depth+1);
+    }
     print_tabs(depth);
     printf(")\n");
 }
@@ -114,6 +150,9 @@ void print_statement(statement_node* stmt, int depth) {
             break;
         case STMT_EXPR:
             print_expr(stmt->stmt.expr, depth);
+            break;
+        case STMT_IF:
+            print_if(stmt->stmt.if_stmt, depth);
             break;
     }
 }

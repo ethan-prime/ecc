@@ -59,12 +59,19 @@ typedef struct {
     struct expr_node* expr;
 } assign_node;
 
+typedef struct {
+    struct expr_node* condition;
+    struct expr_node* condition_true;
+    struct expr_node* condition_false;
+} ternary_node;
+
 typedef enum {
     EXPR_CONSTANT,
     EXPR_UNARY,
     EXPR_BINARY,
     EXPR_VARIABLE,
     EXPR_ASSIGN,
+    EXPR_TERNARY,
 } expr_type;
 
 typedef struct expr_node {
@@ -75,6 +82,7 @@ typedef struct expr_node {
         binary_node* binary_expr;
         variable_node* variable;
         assign_node* assign;
+        ternary_node* ternary;
     } expr;
 } expr_node;
 
@@ -82,10 +90,18 @@ typedef struct return_node {
     expr_node* expr;
 } return_node;
 
+struct statement_node;
+typedef struct if_node {
+    expr_node* condition;
+    struct statement_node* then_stmt;
+    struct statement_node* else_stmt; // optional
+} if_node;
+
 typedef enum {
     STMT_RET,
     STMT_EXPR,
     STMT_NULL,
+    STMT_IF,
 } statement_type;
 
 typedef struct statement_node {
@@ -93,6 +109,7 @@ typedef struct statement_node {
     union {
         return_node* ret;
         expr_node* expr;
+        if_node* if_stmt;
     } stmt;
 } statement_node;
 
@@ -125,3 +142,5 @@ typedef struct program_node {
 
 // pretty-prints the ast of the program.
 void print_ast(program_node* program);
+void print_statement(statement_node* stmt, int depth);
+void print_expr(expr_node* expr, int depth);
