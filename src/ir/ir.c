@@ -415,6 +415,8 @@ list(ir_instruction_node *)* statement_to_ir(statement_node *stmt) {
         expr_to_ir(stmt->stmt.expr, instrs);
     } else if (stmt->type == STMT_IF) {
         if_to_ir(stmt->stmt.if_stmt, instrs);
+    } else if (stmt->type == STMT_COMPOUND) {
+        instrs = block_to_ir(stmt->stmt.compound->block);
     } // null stmt has no instrs...
     return instrs;
 }
@@ -439,16 +441,22 @@ list(ir_instruction_node*)* block_item_to_ir(block_item_node* block_item) {
     }
 }
 
+list(ir_instruction_node*)* block_to_ir(block_node* block) {
+    list(ir_instruction_node*)* instrs = list_init();
+
+    for (int i = 0; i < block->items->len; i++) {
+        block_item_node* block_item = (block_item_node*)list_get(block->items, i);
+        list_concat(instrs, block_item_to_ir(block_item)); // add instrs to body...
+    }
+
+    return instrs;
+}
+
 ir_function_node* function_to_ir(function_node *function) {
     ir_function_node* node = MALLOC(ir_function_node);
     node->identifier = function->identifier;
     
-    node->instructions = list_init(); // for function instructions
-    
-    for (int i = 0; i < function->body->len; i++) {
-        block_item_node* block_item = (block_item_node*)list_get(function->body, i);
-        list_concat(node->instructions, block_item_to_ir(block_item)); // add instrs to body...
-    }
+    node->instructions = block_to_ir(function->body);
 
     add_return_0(node->instructions); // in case the function forgets a return value, return 0. c standard
 

@@ -140,6 +140,13 @@ void print_if(if_node* if_node, int depth) {
     printf(")\n");
 }
 
+void print_block(block_node* block, int depth) {
+    for (int i = 0; i < block->items->len; i++) {
+        block_item_node* block_item = (block_item_node*)list_get(block->items, i);
+        print_block_item(block_item, depth);
+    }
+}
+
 void print_statement(statement_node* stmt, int depth) {
     switch(stmt->type) {
         case STMT_RET:
@@ -153,6 +160,13 @@ void print_statement(statement_node* stmt, int depth) {
             break;
         case STMT_IF:
             print_if(stmt->stmt.if_stmt, depth);
+            break;
+        case STMT_COMPOUND:
+            print_tabs(depth);
+            printf("{\n");
+            print_block(stmt->stmt.compound->block, depth+1);
+            print_tabs(depth);
+            printf("}\n");
             break;
     }
 }
@@ -190,10 +204,7 @@ void print_function(function_node* func, int depth) {
     printf("name=\"%s\",\n", func->identifier);
     print_tabs(depth+1);
     printf("body=\n");
-    for (int i = 0; i < func->body->len; i++) {
-        block_item_node* block_item = (block_item_node*)list_get(func->body, i);
-        print_block_item(block_item, depth+1);
-    }
+    print_block(func->body, depth + 1);
     print_tabs(depth);
     printf(")\n");
 }

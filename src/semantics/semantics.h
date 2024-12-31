@@ -15,6 +15,7 @@ void resolve_expr(variablemap* vm, expr_node* expr);
 void resolve_declaration(variablemap* vm, declaration_node* declare);
 void resolve_statement(variablemap* vm, statement_node* statement);
 void resolve_block_item(variablemap* vm, block_item_node* block_item);
+void resolve_block(variablemap* vm, block_node* block);
 void resolve_function(function_node* function);
 void resolve_program(program_node* program);
 #define semantic_pass1(p) (resolve_program(p)) // variable resolution pass

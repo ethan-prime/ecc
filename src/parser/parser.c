@@ -660,6 +660,9 @@ statement_node *parse_statement(token_queue *tq)
     {
         node->type = STMT_IF;
         node->stmt.if_stmt = parse_if(tq);
+    } else if (CUR(tq)->id == OPEN_BRACE) {
+        node->type = STMT_COMPOUND;
+        node->stmt.compound = parse_compound_statement(tq);
     }
     else
     {
@@ -729,6 +732,42 @@ block_item_node *parse_block_item(token_queue *tq)
     return block_item;
 }
 
+block_node* parse_block(token_queue *tq) {
+    block_node* block = MALLOC(block_node);
+
+    if (!expect(tq, OPEN_BRACE))
+    {
+        parser_error("{", CUR(tq));
+    }
+    DEQ(tq);
+
+    // collect the block items
+    block->items = list_init();
+
+    while (CUR(tq)->id != CLOSE_BRACE)
+    {
+        // build block body
+        block_item_node *b = parse_block_item(tq);
+        list_append(block->items, (void *)b);
+    }
+
+    if (!expect(tq, CLOSE_BRACE))
+    {
+        parser_error("}", CUR(tq));
+    }
+    DEQ(tq);
+
+    return block;
+}
+
+compound_node* parse_compound_statement(token_queue* tq) {
+    compound_node* node = MALLOC(compound_node);
+
+    node->block = parse_block(tq);
+
+    return node;
+}
+
 function_node *parse_function(token_queue *tq)
 {
     if (!expect(tq, KEYW_INT))
@@ -764,29 +803,7 @@ function_node *parse_function(token_queue *tq)
     }
     DEQ(tq);
 
-    if (!expect(tq, OPEN_BRACE))
-    {
-        parser_error("{", CUR(tq));
-    }
-    DEQ(tq);
-
-    // parse a statement - later : multiple statements!
-    list(block_item_node *) *body = list_init();
-
-    while (CUR(tq)->id != CLOSE_BRACE)
-    {
-        // build function body
-        block_item_node *b = parse_block_item(tq);
-        list_append(body, (void *)b);
-    }
-
-    node->body = body;
-
-    if (!expect(tq, CLOSE_BRACE))
-    {
-        parser_error("}", CUR(tq));
-    }
-    DEQ(tq);
+    node->body = parse_block(tq);
 
     return node;
 }

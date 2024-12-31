@@ -146,6 +146,7 @@ ir_function_node* function_to_ir(function_node *function);
 list(ir_instruction_node*)* declaration_to_ir(declaration_node* declare);
 
 // STATEMENTS:
+list(ir_instruction_node *)* block_to_ir(block_node* block);
 list(ir_instruction_node *)* statement_to_ir(statement_node *stmt);
 void return_to_ir(return_node *ret, list(ir_instruction_node*)* instrs);
 // appends instructions to generate expr -> ir, returns ir_val_node with DEST ir val.

@@ -59,7 +59,7 @@ void resolve_expr(variablemap* vm, expr_node* expr) {
 }
 
 void resolve_declaration(variablemap* vm, declaration_node* declare) {
-    if (variablemap_get(vm, declare->identifier)) {
+    if (variablemap_get(vm, declare->identifier) && from_current_block(vm, declare->identifier)) {
         semantic_error_declared_twice(declare->identifier, vm);
     }
 
@@ -90,6 +90,9 @@ void resolve_statement(variablemap* vm, statement_node* statement) {
         resolve_expr(vm, statement->stmt.expr);
     } else if (statement->type == STMT_IF) {
         resolve_if(vm, statement->stmt.if_stmt);
+    } else if (statement->type == STMT_COMPOUND) {
+        variablemap* child_vm = variablemap_copy(vm);
+        resolve_block(child_vm, statement->stmt.compound->block);
     }
     // null statement needs no resolution
 }
@@ -102,13 +105,21 @@ void resolve_block_item(variablemap* vm, block_item_node* block_item) {
     }
 }
 
+void resolve_block(variablemap* vm, block_node* block) {
+    block_item_node* block_item;
+    for (int i = 0; i < block->items->len; i++) {
+        block_item = (block_item_node*)list_get(block->items, i);
+        resolve_block_item(vm, block_item);
+    }
+}
+
 void resolve_function(function_node* function) {
     // each function gets its own variablemap, for now? i think
     variablemap* vm = variablemap_init();
 
     block_item_node* block_item;
-    for (int i = 0; i < function->body->len; i++) {
-        block_item = (block_item_node*)list_get(function->body, i);
+    for (int i = 0; i < function->body->items->len; i++) {
+        block_item = (block_item_node*)list_get(function->body->items, i);
         resolve_block_item(vm, block_item);
     }
 }

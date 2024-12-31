@@ -97,11 +97,17 @@ typedef struct if_node {
     struct statement_node* else_stmt; // optional
 } if_node;
 
+struct block_node;
+typedef struct {
+    struct block_node* block;
+} compound_node;
+
 typedef enum {
     STMT_RET,
     STMT_EXPR,
     STMT_NULL,
     STMT_IF,
+    STMT_COMPOUND,
 } statement_type;
 
 typedef struct statement_node {
@@ -110,6 +116,7 @@ typedef struct statement_node {
         return_node* ret;
         expr_node* expr;
         if_node* if_stmt;
+        compound_node* compound;
     } stmt;
 } statement_node;
 
@@ -131,9 +138,13 @@ typedef struct {
     } item; 
 } block_item_node;
 
+typedef struct block_node {
+    list(block_item_node*)* items;
+} block_node;
+
 typedef struct function_node {
     char* identifier;
-    list(block_item_node*)* body;
+    block_node* body;
 } function_node;
 
 typedef struct program_node {
@@ -144,3 +155,5 @@ typedef struct program_node {
 void print_ast(program_node* program);
 void print_statement(statement_node* stmt, int depth);
 void print_expr(expr_node* expr, int depth);
+void print_block(block_node* block, int depth);
+void print_block_item(block_item_node* block_item, int depth);
