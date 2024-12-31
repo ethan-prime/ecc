@@ -8,6 +8,7 @@
 int IR_VAR_IDX = 0;
 int IR_FALSE_IDX = 0;
 int IR_END_IDX = 0;
+int IR_ELSE_IDX = 0;
 
 // converts n to string repr, stores at *buf. MAKE SURE TO MALLOC floor(log10(n)) + 2 bytes (n_places + 1).
 void int_to_str(char* buf, int n, int n_places) {
@@ -48,6 +49,12 @@ char* ir_make_shortcircuit_label() {
 char* ir_make_end_label() {
     char* res = ir_make_n_ident("_end.", IR_END_IDX);
     IR_END_IDX++;
+    return res;
+}
+
+char* ir_make_else_label() {
+    char* res = ir_make_n_ident("_else.", IR_ELSE_IDX);
+    IR_ELSE_IDX++;
     return res;
 }
 
@@ -248,6 +255,29 @@ ir_val_node* assign_to_ir(assign_node* assign, list(ir_instruction_node *)* inst
     return dest;
 }
 
+ir_val_node* ternary_to_ir(ternary_node* ternary, list(ir_instruction_node*)* instrs) {
+    ir_val_node* c = expr_to_ir(ternary->condition, instrs);
+    ir_val_node* res = ir_create_var(ir_make_temp_var());
+    char* e2_label = ir_make_else_label();
+    ir_instruction_node* jmp1 = ir_create_jumpz_instr(c, e2_label);
+    list_append(instrs, (void*)jmp1);
+    ir_val_node* v1 = expr_to_ir(ternary->condition_true, instrs);
+    ir_instruction_node* copy1 = ir_create_copy_instr(v1, res);
+    list_append(instrs, (void*)copy1);
+    char* end_label = ir_make_end_label();
+    ir_instruction_node* jmp2 = ir_create_jump_instr(end_label);
+    list_append(instrs, (void*)jmp2);
+    ir_instruction_node* e2_label_instr = ir_create_label_instr(e2_label);
+    list_append(instrs, (void*)e2_label_instr);
+    ir_val_node* v2 = expr_to_ir(ternary->condition_false, instrs);
+    ir_instruction_node* copy2 = ir_create_copy_instr(v2, res);
+    list_append(instrs, (void*)copy2);
+    ir_instruction_node* end_label_instr = ir_create_label_instr(end_label);
+    list_append(instrs, (void*)end_label_instr);
+
+    return res;
+}
+
 // appends instructions to generate expr -> ir, returns ir_val_node with DEST ir val.
 ir_val_node* expr_to_ir(expr_node* expr, list(ir_instruction_node *)* instructions) {
     if (expr->type == EXPR_CONSTANT) {
@@ -317,8 +347,9 @@ ir_val_node* expr_to_ir(expr_node* expr, list(ir_instruction_node *)* instructio
     } else if (expr->type == EXPR_VARIABLE) {
         return variable_to_ir(expr->expr.variable);
     } else if (expr->type == EXPR_ASSIGN) {
-        ir_val_node* res = assign_to_ir(expr->expr.assign, instructions);
-        return res;
+        return assign_to_ir(expr->expr.assign, instructions);
+    } else if (expr->type == EXPR_TERNARY) {
+        return ternary_to_ir(expr->expr.ternary, instructions);
     }
     // invalid instruction, unreachable...
     return NULL;
@@ -332,6 +363,39 @@ void return_to_ir(return_node *ret, list(ir_instruction_node*)* instrs) {
     ret_instr->type = IR_INSTR_RET;
     ret_instr->instruction.ret = ret_node;
     list_append(instrs, (void*)ret_instr);
+}
+
+void if_to_ir(if_node* if_stmt, list(ir_instruction_node*)* instrs) {
+    ir_val_node* c = expr_to_ir(if_stmt->condition, instrs);
+    char* end_label = ir_make_end_label();
+    if (if_stmt->else_stmt == NULL) {
+        // add instrs for evaluating condition
+        ir_instruction_node* jmp1 = ir_create_jumpz_instr(c, end_label);
+        list_append(instrs, (void*)jmp1);
+        list(ir_instruction_node*)* stmt = statement_to_ir(if_stmt->then_stmt);
+        // add instrs for then stmt
+        list_concat(instrs, stmt);
+    } else {
+        // we have an else statement
+        char* else_label = ir_make_else_label();
+        ir_instruction_node* jmp2 = ir_create_jumpz_instr(c, else_label);
+        list_append(instrs, (void*)jmp2);
+
+        list(ir_instruction_node*)* stmt = statement_to_ir(if_stmt->then_stmt);
+        list_concat(instrs, stmt);
+
+        // jump to end
+        ir_instruction_node* jmp1 = ir_create_jump_instr(end_label);
+        list_append(instrs, (void*)jmp1);
+
+        ir_instruction_node* else_label_instr = ir_create_label_instr(else_label);
+        list_append(instrs, (void*)else_label_instr);
+
+        list(ir_instruction_node*)* else_stmt = statement_to_ir(if_stmt->else_stmt);
+        list_concat(instrs, else_stmt);
+    }
+    ir_instruction_node* end = ir_create_label_instr(end_label);
+    list_append(instrs, (void*)end);
 }
 
 void add_return_0(list(ir_instruction_node*)* instrs) {
@@ -349,6 +413,8 @@ list(ir_instruction_node *)* statement_to_ir(statement_node *stmt) {
         return_to_ir(stmt->stmt.ret, instrs);
     } else if (stmt->type == STMT_EXPR) {
         expr_to_ir(stmt->stmt.expr, instrs);
+    } else if (stmt->type == STMT_IF) {
+        if_to_ir(stmt->stmt.if_stmt, instrs);
     } // null stmt has no instrs...
     return instrs;
 }

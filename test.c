@@ -1,9 +1,9 @@
 int main() {
-    int a = 10;
+    int a = 1;
     int b;
-    if (a > 10)
-        b = a = 1;
+    if (a > (5+5 % 10))
+        b = a = a++;
     else
         b = 4;
-    return a ? b ? 1 : 2 : 3;
+    return a ? b & 1 ? 1 : 2 : 3;
 }
