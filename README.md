@@ -3,10 +3,12 @@ Ethan's C Compiler, written in C!
 
 ## Status
 ```
-if statements
-return statements
-local variables
-arbitrary binary expressions
+features:
+- if statements
+- return statements
+- local variables
+- arbitrary binary expressions
+- compound statements
 ```
 
 ```c
