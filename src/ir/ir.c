@@ -280,6 +280,9 @@ ir_val_node* ternary_to_ir(ternary_node* ternary, list(ir_instruction_node*)* in
 
 // appends instructions to generate expr -> ir, returns ir_val_node with DEST ir val.
 ir_val_node* expr_to_ir(expr_node* expr, list(ir_instruction_node *)* instructions) {
+    if (expr == NULL) {
+        return NULL;
+    }
     if (expr->type == EXPR_CONSTANT) {
         ir_val_node* val = MALLOC(ir_val_node);
         val->type = IR_CONSTANT;
@@ -406,6 +409,100 @@ void add_return_0(list(ir_instruction_node*)* instrs) {
     list_append(instrs, (void*)i);
 }
 
+// returns prefix+loop_label str.
+char* make_prefix_loop_label(char* prefix, char* loop_label) {
+    char* break_label = (char*)malloc(sizeof(char)*(strlen(loop_label)+strlen(prefix)+1));
+    strcpy(break_label, prefix);
+    strcat(break_label, loop_label);
+    return break_label;
+}
+
+void break_to_ir(break_node* break_node, list(ir_instruction_node*)* instrs) {    
+    ir_instruction_node* i = ir_create_jump_instr(make_prefix_loop_label("_break", break_node->loop_label));
+    list_append(instrs, (void*)i);
+}
+
+void continue_to_ir(continue_node* continue_node, list(ir_instruction_node*)* instrs) {
+    ir_instruction_node* i = ir_create_jump_instr(make_prefix_loop_label("_continue", continue_node->loop_label));
+    list_append(instrs, (void*)i);
+}
+
+void do_while_to_ir(do_while_node* do_while_node, list(ir_instruction_node*)* instrs) {
+    char* start_name = make_prefix_loop_label("_start", do_while_node->loop_label);
+    ir_instruction_node* start_label = ir_create_label_instr(start_name);
+    list_append(instrs, (void*)start_label);
+    list(ir_instruction_node*)* body = statement_to_ir(do_while_node->body);
+    list_concat(instrs, body);
+    char* continue_name = make_prefix_loop_label("_continue", do_while_node->loop_label);
+    ir_instruction_node* continue_label = ir_create_label_instr(continue_name);
+    list_append(instrs, (void*)continue_label);
+    ir_val_node* c = expr_to_ir(do_while_node->condition, instrs);
+    ir_instruction_node* jmp1 = ir_create_jumpnz_instr(c, start_name);
+    list_append(instrs, (void*)jmp1);
+    char* break_name = make_prefix_loop_label("_break", do_while_node->loop_label);
+    ir_instruction_node* break_label = ir_create_label_instr(break_name);
+    list_append(instrs, (void*)break_label);
+}
+
+void while_to_ir(while_node* while_node, list(ir_instruction_node*)* instrs) {
+    char* continue_name = make_prefix_loop_label("_continue", while_node->loop_label);
+    ir_instruction_node* continue_label = ir_create_label_instr(continue_name);
+    list_append(instrs, (void*)continue_label);
+    ir_val_node* c = expr_to_ir(while_node->condition, instrs);
+    char* break_name = make_prefix_loop_label("_break", while_node->loop_label);
+    ir_instruction_node* jmp1 = ir_create_jumpz_instr(c, break_name);
+    list_append(instrs, (void*)jmp1);
+    list(ir_instruction_node*)* body = statement_to_ir(while_node->body);
+    list_concat(instrs, body);
+    ir_instruction_node* jmp2 = ir_create_jump_instr(continue_name);
+    list_append(instrs, (void*)jmp2);
+    ir_instruction_node* break_label = ir_create_label_instr(break_name);
+    list_append(instrs, (void*)break_label);
+}
+
+void for_init_to_ir(for_init_node* for_init, list(ir_instruction_node*)* instrs) {
+    if (for_init->type == INIT_DECL) {
+        list_concat(instrs, declaration_to_ir(for_init->for_init.init_declare));
+    } else {
+        expr_to_ir(for_init->for_init.init_expr, instrs);
+    }
+}
+
+void for_to_ir(for_node* for_stmt, list(ir_instruction_node*)* instrs) {
+    if (for_stmt->init != NULL) {
+        for_init_to_ir(for_stmt->init, instrs);
+    }
+
+    char* start_name = make_prefix_loop_label("_start", for_stmt->loop_label);
+    char* break_name = make_prefix_loop_label("_break", for_stmt->loop_label);
+    char* continue_name = make_prefix_loop_label("_continue", for_stmt->loop_label);
+
+    ir_instruction_node* start_label = ir_create_label_instr(start_name);
+    list_append(instrs, (void*)start_label);
+
+    if (for_stmt->condition != NULL) {
+        ir_val_node* c = expr_to_ir(for_stmt->condition, instrs);
+        ir_instruction_node* jmp1 = ir_create_jumpz_instr(c, break_name);
+        list_append(instrs, (void*)jmp1);
+    }
+
+    list(ir_instruction_node*)* body = statement_to_ir(for_stmt->body);
+    list_concat(instrs, body);
+
+    ir_instruction_node* continue_label = ir_create_label_instr(continue_name);
+    list_append(instrs, (void*)continue_label);
+
+    if (for_stmt->final_expr != NULL) {
+        expr_to_ir(for_stmt->final_expr, instrs);
+    }
+
+    ir_instruction_node* jmp2 = ir_create_jump_instr(start_name);
+    list_append(instrs, (void*)jmp2);
+
+    ir_instruction_node* break_label = ir_create_label_instr(break_name);
+    list_append(instrs, (void*)break_label);
+}
+
 list(ir_instruction_node *)* statement_to_ir(statement_node *stmt) {
     // right now, we only have return statements
     list(ir_instruction_node*)* instrs = list_init();
@@ -417,7 +514,18 @@ list(ir_instruction_node *)* statement_to_ir(statement_node *stmt) {
         if_to_ir(stmt->stmt.if_stmt, instrs);
     } else if (stmt->type == STMT_COMPOUND) {
         instrs = block_to_ir(stmt->stmt.compound->block);
-    } // null stmt has no instrs...
+    } else if (stmt->type == STMT_DO_WHILE) {
+        do_while_to_ir(stmt->stmt.do_while_node, instrs);
+    } else if (stmt->type == STMT_WHILE) {
+        while_to_ir(stmt->stmt.while_node, instrs);
+    } else if (stmt->type == STMT_FOR) {
+        for_to_ir(stmt->stmt.for_node, instrs);
+    } else if (stmt->type == STMT_BREAK) {
+        break_to_ir(stmt->stmt.break_node, instrs);
+    } else if (stmt->type == STMT_CONTINUE) {
+        continue_to_ir(stmt->stmt.continue_node, instrs);
+    }
+    // null stmt has no instrs...
     return instrs;
 }
 

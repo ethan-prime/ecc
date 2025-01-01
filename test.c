@@ -1,8 +1,10 @@
 int main(void) {
-    int a = 0;
-    while (1) {
-        a++;
-        if (a > 50) 
+    int n = 10;
+    int m = 0;
+    while (n-- || (m % 2)) {
+        m += n;
+        if (m > 10)
             break;
     }
+    return m;       
 }
