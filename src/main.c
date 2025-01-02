@@ -16,95 +16,137 @@ void panic(char* msg) {
     exit(1);
 }
 
+int is_c_file(char* file_name) {
+    char* dot = strrchr(file_name, '.');
+    return (dot && !strcmp(dot, ".c"));
+}
+
 int main(int argc, char** argv) {
     if (argc < 2) {
-        panic("not enough arguments. usage: ./ecc <path.c> [--lex, --parse, --codegen]");
+        panic("not enough arguments. usage: ./ecc [-c] <path.c>... [--lex, --parse, --codegen]");
     }
 
-    char* source_file = argv[1];
-    char* stage = argv[2];
+    list(char*)* files = list_init();
+    list(char*)* asm_files = list_init();
 
     bool lex = false, parse = false, tacky = false, codegen = false;
-    
-    if (argc > 2) {
-        if (strcmp(stage, "--lex") == 0) {
+    int object_file = 0;
+
+    for (int i = 0; i < argc; i++) {
+        if (strcmp(argv[i], "./ecc") == 0) {
+            continue;
+        } else if (is_c_file(argv[i])) {
+            list_append(files, (void*)argv[i]);
+        } else if (strcmp(argv[i], "-c") == 0) {
+            object_file = 1;
+        } else if (strcmp(argv[i], "--lex")) {
             lex = true;
-        } else if (strcmp(stage, "--parse") == 0) {
+        } else if (strcmp(argv[i], "--parse")) {
             parse = true;
-        } else if (strcmp(stage, "--codegen") == 0) {
-            codegen = true;
-        } else if (strcmp(stage, "--tacky") == 0) {
+        } else if (strcmp(argv[i], "--tacky")) {
             tacky = true;
-        } else {
-            printf("invalid option: %s\n", stage);
-            panic("fatal error");
+        } else if (strcmp(argv[i], "--codegen")) {
+            codegen = true;
         }
     }
+    
+    for (int i = 0; i < files->len; i++) {
+        char* source_file = (char*)list_get(files, i);
 
-    lexer_t* lexer = lexer_init(source_file);
-    lexer_read_file(lexer);
+        lexer_t* lexer = lexer_init(source_file);
+        lexer_read_file(lexer);
 
-    /*
-    printf("File contents:\n");
-    printf("%s\n", lexer->buf);
-    */
+        /*
+        printf("File contents:\n");
+        printf("%s\n", lexer->buf);
+        */
 
-    token_queue* tq = lexer_tokenize(lexer);
+        token_queue* tq = lexer_tokenize(lexer);
 
-    if (lex) {
-        exit(0);
+        if (lex) {
+            exit(0);
+        }
+
+        printf("Sucessfully lexed program...\n");
+
+        program_node* program = parse_program(tq);
+
+        // semantic pass
+        resolve_program(program);
+        label_program(program);
+
+        printf("Parsed program:\n");
+        print_ast(program);
+
+        if (parse) {
+            exit(0);
+        }
+
+        ir_program_node* program_ir = program_to_ir(program);
+
+        printf("Succesfully codegened to TAC...\n");
+        ir_print_program(program_ir);
+
+        if (tacky) {
+            exit(0);
+        }
+
+        asm_program_node* program_asm = ir_program_to_asm(program_ir);
+        replace_pseudo_pass(program_asm);
+        pass2(program_asm);
+
+        printf("Succesfully codegened to ASM...\n");
+
+        if (codegen) {
+            exit(0);
+        }
+
+        char* dest_file = (char*)malloc(sizeof((strlen(source_file)+1)*sizeof(char)));
+        strncpy(dest_file, source_file, strlen(source_file)-2);
+        dest_file[strlen(source_file)-2] = '.';
+        dest_file[strlen(source_file)-1] = 's';
+        dest_file[strlen(source_file)] = '\0';
+
+        list_append(asm_files, (void*)dest_file);
+
+        printf("%s\n", dest_file);
+
+        FILE *file = fopen(dest_file, "w");
+        if (file == NULL) {
+            panic("Error opening file");
+        }
+
+        emit_program(file, program_asm);
+
+        fclose(file);
+
     }
 
-    printf("Sucessfully lexed program...\n");
+    char* first_file = (char*)list_get(files, 0);
+    char* executable_dest = strdup(first_file);
+    if (!object_file) {
+        executable_dest[strlen(executable_dest)-2] = '\0';
+    } else {
+        executable_dest[strlen(executable_dest)-1] = 'o';
+    }
+    
 
-    program_node* program = parse_program(tq);
-
-    // semantic pass
-    resolve_program(program);
-    label_program(program);
-
-    printf("Parsed program:\n");
-    print_ast(program);
-
-    if (parse) {
-        exit(0);
+    char command[1024] = "gcc -o ";
+    strcat(command, executable_dest);
+    strcat(command, " ");
+    if (object_file)
+        strcat(command, "-c ");
+    
+    for (int i = 0; i < asm_files->len; i++) {
+        char* asm_file = (char*)list_get(asm_files, i);
+        strcat(command, asm_file);
+        strcat(command, " ");
     }
 
-    ir_program_node* program_ir = program_to_ir(program);
-
-    printf("Succesfully codegened to TAC...\n");
-    ir_print_program(program_ir);
-
-    if (tacky) {
-        exit(0);
+    printf("%s\n", command);
+    if (system(command) == -1) {
+        panic("gcc unable to be invoked...");
     }
-
-    asm_program_node* program_asm = ir_program_to_asm(program_ir);
-    replace_pseudo_pass(program_asm);
-    pass2(program_asm);
-
-    printf("Succesfully codegened to ASM...\n");
-
-    if (codegen) {
-        exit(0);
-    }
-
-    char* dest_file = (char*)malloc(sizeof((strlen(source_file)+1)*sizeof(char)));
-    strncpy(dest_file, source_file, strlen(source_file)-2);
-    dest_file[strlen(source_file)-2] = '.';
-    dest_file[strlen(source_file)-1] = 's';
-    dest_file[strlen(source_file)] = '\0';
-
-    printf("%s\n", dest_file);
-
-    FILE *file = fopen(dest_file, "w");
-    if (file == NULL) {
-        panic("Error opening file");
-    }
-
-    emit_program(file, program_asm);
-
-    fclose(file);
 
     printf("Successfully compiled file!\n");
 
