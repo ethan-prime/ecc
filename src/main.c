@@ -2,14 +2,28 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include "config.h"
+
+#if LEXER_ENABLE
 #include "lexer/lexer.h"
 #include "lexer/tokens.h"
+#endif
+#if PARSER_ENABLE
 #include "parser/parser.h"
+#endif
+#if SEMANTICS_ENABLE
 #include "semantics/semantics.h"
+#endif
+#if ASM_ENABLE
 #include "assembly/asm_ast.h"
 #include "assembly/passes.h"
+#endif
+#if CODEGEN_ENABLE
 #include "codegen/codegen.h"
+#endif
+#if IR_ENABLE
 #include "ir/ir.h"
+#endif
 
 void panic(char* msg) {
     printf("%s\n", msg);
@@ -72,8 +86,10 @@ int main(int argc, char** argv) {
         program_node* program = parse_program(tq);
 
         // semantic pass
+        #if SEMANTICS_ENABLE
         resolve_program(program);
-        label_program(program);
+        //label_program(program);
+        #endif
 
         printf("Parsed program:\n");
         print_ast(program);
@@ -82,6 +98,7 @@ int main(int argc, char** argv) {
             exit(0);
         }
 
+        #if IR_ENABLE
         ir_program_node* program_ir = program_to_ir(program);
 
         printf("Succesfully codegened to TAC...\n");
@@ -90,13 +107,17 @@ int main(int argc, char** argv) {
         if (tacky) {
             exit(0);
         }
-
+        #endif
+        
+        #if ASM_ENABLE
         asm_program_node* program_asm = ir_program_to_asm(program_ir);
         replace_pseudo_pass(program_asm);
         pass2(program_asm);
 
         printf("Succesfully codegened to ASM...\n");
+        #endif
 
+        #if CODEGEN_ENABLE
         if (codegen) {
             exit(0);
         }
@@ -119,9 +140,11 @@ int main(int argc, char** argv) {
         emit_program(file, program_asm);
 
         fclose(file);
-
+        #endif
     }
 
+
+    #if CODEGEN_ENABLE
     char* first_file = (char*)list_get(files, 0);
     char* executable_dest = strdup(first_file);
     if (!object_file) {
@@ -149,6 +172,6 @@ int main(int argc, char** argv) {
     }
 
     printf("Successfully compiled file!\n");
-
+    #endif
     return 0;
 }

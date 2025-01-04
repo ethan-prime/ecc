@@ -76,6 +76,24 @@ void print_ternary(ternary_node* ternary, int depth) {
     printf(")\n");
 }
 
+void print_function_call(function_call_node* function_call, int depth) {
+    printf("FunctionCall(\n");
+    print_tabs(depth+1);
+    printf("name=%s\n", function_call->identifier);
+    print_tabs(depth+1);
+    if (function_call->args->len == 0) {
+        printf("args=None\n");
+    } else {
+        printf("args=\n");
+        for(int i = 0; i < function_call->args->len; i++) {
+            expr_node* arg = (expr_node*)list_get(function_call->args, i);
+            print_expr(arg, depth+1);
+        }
+    }
+    print_tabs(depth);
+    printf(")\n");
+}
+
 void print_expr(expr_node *expr, int depth) {
     print_tabs(depth);
     if (expr == NULL) {
@@ -114,6 +132,8 @@ void print_expr(expr_node *expr, int depth) {
         printf("Var(%s)\n", expr->expr.variable->identifier);
     } else if (expr->type == EXPR_TERNARY) {
         print_ternary(expr->expr.ternary, depth);
+    } else if (expr->type == EXPR_FUNCTION_CALL) {
+        print_function_call(expr->expr.function_call, depth);
     }
 }
 
@@ -151,9 +171,9 @@ void print_block(block_node* block, int depth) {
     }
 }
 
-void print_declare(declaration_node* declare, int depth) {
+void print_variable_declare(variable_declaration_node* declare, int depth) {
     print_tabs(depth);
-    printf("Declare(\n");
+    printf("VariableDeclare(\n");
     print_tabs(depth+1);
     printf("Var(%s)", declare->identifier);
     if (declare->init != NULL) {
@@ -204,7 +224,7 @@ void print_do_while(do_while_node* do_while, int depth) {
 
 void print_for_init(for_init_node* for_init, int depth) {
     if (for_init->type == INIT_DECL) {
-        print_declare(for_init->for_init.init_declare, depth);
+        print_variable_declare(for_init->for_init.init_declare, depth);
     } else {
         print_expr(for_init->for_init.init_expr, depth);
     }
@@ -280,11 +300,23 @@ void print_block_item(block_item_node* block_item, int depth) {
     }
 }
 
-void print_function(function_node* func, int depth) {
+void print_function_declare(function_declaration_node* func, int depth) {
     print_tabs(depth);
-    printf("Function(\n");
+    printf("FunctionDeclare(\n");
     print_tabs(depth+1);
-    printf("name=\"%s\",\n", func->identifier);
+    printf("name=\"%s\",\n", func->name);
+    print_tabs(depth+1);
+    if (func->params->len == 0) {
+        printf("params=None\n");
+    } else {
+        printf("params=\n");
+        print_tabs(depth+1);
+        for (int i = 0; i < func->params->len; i++) {
+            param_node* param = (param_node*)list_get(func->params, i);
+            printf("%s, ", param->identifier);
+        }
+        printf("\n");
+    }
     print_tabs(depth+1);
     printf("body=\n");
     print_block(func->body, depth + 1);
@@ -292,9 +324,20 @@ void print_function(function_node* func, int depth) {
     printf(")\n");
 }
 
+void print_declare(declaration_node* decl, int depth) {
+    if (decl->type == DECLARE_FUNCTION) {
+        print_function_declare(decl->declaration.function, depth);
+    } else {
+        print_variable_declare(decl->declaration.variable, depth);
+    }
+}
+
 // pretty-prints the ast of the program.
 void print_ast(program_node *program) {
     printf("Program(\n");
-    print_function(program->function, 1);
+    for (int i = 0; i < program->functions->len; i++) {
+        function_declaration_node* function = (function_declaration_node*)list_get(program->functions, i);
+        print_function_declare(function, 1);
+    }
     printf(")\n");
 }

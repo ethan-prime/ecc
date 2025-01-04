@@ -1,3 +1,5 @@
+#include "../config.h"
+#if PARSER_ENABLE
 #include "../utils/tokenqueue.h"
 #include "../lexer/tokens.h"
 #include "../lexer/lexer.h"
@@ -145,6 +147,48 @@ variable_node *parse_variable_node(token_queue *tq)
     return var;
 }
 
+list(expr_node*)* parse_arg_list(token_queue* tq) {
+    list(expr_node*)* arg_list = list_init();
+
+    expr_node* expr = parse_expr(tq, 0);
+    list_append(arg_list, (void*)expr);
+
+    while (CUR(tq)->id == COMMA) {
+        DEQ(tq);
+        expr = parse_expr(tq, 0);
+        list_append(arg_list, (void*)expr);
+    }
+
+    return arg_list; 
+}
+
+function_call_node* parse_function_call(token_queue* tq) {
+    function_call_node* node = MALLOC(function_call_node);
+    
+    if (!expect(tq, IDENTIFIER)) {
+        parser_error("a function identifier", CUR(tq));
+    }
+    node->identifier = CUR(tq)->val.s;
+    DEQ(tq);
+
+    if (!expect(tq, OPEN_PAREN)) {
+        parser_error("(", CUR(tq));
+    }
+    DEQ(tq);
+
+    node->args = list_init(); // for ease when printing and checking length
+    if (CUR(tq)->id != CLOSE_PAREN) {
+        node->args = parse_arg_list(tq);
+    }
+
+    if (!expect(tq, CLOSE_PAREN)) {
+        parser_error(")", CUR(tq));
+    }
+    DEQ(tq);
+
+    return node;
+}
+
 expr_node *parse_factor(token_queue *tq)
 {
     expr_node *node = MALLOC(expr_node);
@@ -174,8 +218,13 @@ expr_node *parse_factor(token_queue *tq)
     }
     else if (CUR(tq)->id == IDENTIFIER)
     {
-        node->type = EXPR_VARIABLE;
-        node->expr.variable = parse_variable_node(tq);
+        if (token_queue_peek(tq)->id == OPEN_PAREN) {
+            node->type = EXPR_FUNCTION_CALL;
+            node->expr.function_call = parse_function_call(tq);
+        } else {
+            node->type = EXPR_VARIABLE;
+            node->expr.variable = parse_variable_node(tq);
+        }
     }
 
     return node;
@@ -611,7 +660,7 @@ for_init_node* parse_for_init(token_queue* tq) {
     if (CUR(tq)->id == KEYW_INT) {
         // declaration
         for_init->type = INIT_DECL;
-        for_init->for_init.init_declare = parse_declaration(tq);
+        for_init->for_init.init_declare = parse_variable_declaration(tq);
     } else {
         // expression
         for_init->type = INIT_EXPR;
@@ -837,15 +886,8 @@ statement_node *parse_statement(token_queue *tq)
     return node;
 }
 
-declaration_node *parse_declaration(token_queue *tq)
-{
-    declaration_node *node = MALLOC(declaration_node);
-
-    if (!expect(tq, KEYW_INT))
-    {
-        parser_error("int", CUR(tq));
-    }
-    DEQ(tq);
+variable_declaration_node* parse_variable_declaration(token_queue* tq) {
+    variable_declaration_node* node = MALLOC(variable_declaration_node);
 
     if (!expect(tq, IDENTIFIER))
     {
@@ -867,6 +909,108 @@ declaration_node *parse_declaration(token_queue *tq)
         parser_error(";", CUR(tq));
     }
     DEQ(tq);
+
+    return node;
+}
+
+param_node* create_param(char* identifier) {
+    param_node* param = MALLOC(param_node);
+    param->identifier = identifier;
+
+    return param;
+}
+
+list(param_node*)* parse_param_list(token_queue* tq) {
+    list(param_node*)* param_list = list_init();
+
+    // no params
+    if (CUR(tq)->id == KEYW_VOID) {
+        DEQ(tq);
+        return param_list;
+    }
+
+    if (!expect(tq, KEYW_INT)) {
+        parser_error("int", CUR(tq));
+    }
+    DEQ(tq);
+    if (!expect(tq, IDENTIFIER)) {
+        parser_error("int", CUR(tq));
+    }
+    list_append(param_list, (void*)create_param(CUR(tq)->val.s));
+    DEQ(tq);
+
+    while (CUR(tq)->id == COMMA) {
+        DEQ(tq);
+        if (!expect(tq, KEYW_INT)) {
+            parser_error("int", CUR(tq));
+        }
+        DEQ(tq);
+        if (!expect(tq, IDENTIFIER)) {
+            parser_error("int", CUR(tq));
+        }
+        list_append(param_list, (void*)create_param(CUR(tq)->val.s));
+        DEQ(tq);
+    }
+
+    return param_list;
+}
+
+function_declaration_node* parse_function_declaration(token_queue* tq) {
+    function_declaration_node* node = MALLOC(function_declaration_node);
+
+    if (!expect(tq, IDENTIFIER))
+    {
+        parser_error("an identifier", CUR(tq));
+    }
+    node->name = CUR(tq)->val.s;
+    DEQ(tq);
+
+    if (!expect(tq, OPEN_PAREN))
+    {
+        parser_error("(", CUR(tq));
+    }
+    DEQ(tq);
+
+    node->params = parse_param_list(tq);
+
+    if (!expect(tq, CLOSE_PAREN))
+    {
+        parser_error(")", CUR(tq));
+    }
+    DEQ(tq);
+
+    if (!expect(tq, SEMICOLON))
+    {
+        node->body = parse_block(tq);
+    } else {
+        DEQ(tq);
+    }
+
+    return node;
+}
+
+declaration_node *parse_declaration(token_queue *tq)
+{
+    declaration_node *node = MALLOC(declaration_node);
+
+    if (!expect(tq, KEYW_INT))
+    {
+        parser_error("int", CUR(tq));
+    }
+    DEQ(tq);
+
+    if (!expect(tq, IDENTIFIER))
+    {
+        parser_error("an identifier", CUR(tq));
+    }
+
+    if (token_queue_peek(tq)->id == OPEN_PAREN) {
+        node->type = DECLARE_FUNCTION;
+        node->declaration.function = parse_function_declaration(tq);
+    } else {
+        node->type = DECLARE_VARIABLE;
+        node->declaration.variable = parse_variable_declaration(tq);
+    }
 
     return node;
 }
@@ -927,51 +1071,20 @@ compound_node* parse_compound_statement(token_queue* tq) {
     return node;
 }
 
-function_node *parse_function(token_queue *tq)
-{
-    if (!expect(tq, KEYW_INT))
-    {
-        parser_error("int", CUR(tq));
-    }
-    DEQ(tq);
-
-    function_node *node = MALLOC(function_node);
-
-    if (!expect(tq, IDENTIFIER))
-    {
-        parser_error("a function identifier", CUR(tq));
-    }
-    node->identifier = CUR(tq)->val.s;
-    DEQ(tq);
-
-    if (!expect(tq, OPEN_PAREN))
-    {
-        parser_error("(", CUR(tq));
-    }
-    DEQ(tq);
-
-    // "void" is optional
-    if (expect(tq, KEYW_VOID))
-    {
-        DEQ(tq);
-    }
-
-    if (!expect(tq, CLOSE_PAREN))
-    {
-        parser_error(")", CUR(tq));
-    }
-    DEQ(tq);
-
-    node->body = parse_block(tq);
-
-    return node;
-}
-
 program_node *parse_program(token_queue *tq)
 {
     program_node *node = MALLOC(program_node);
 
-    node->function = parse_function(tq);
+    node->functions = list_init();
+
+    while (CUR(tq) != NULL) {
+        declaration_node* decl = parse_declaration(tq);
+        if (decl->type != DECLARE_FUNCTION) {
+            parser_error("a function declaration", CUR(tq));
+        }
+        list_append(node->functions, (void*)(decl->declaration.function));
+    }
 
     return node;
 }
+#endif

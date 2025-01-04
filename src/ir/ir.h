@@ -1,4 +1,8 @@
 // This represnts our Three-Adress Code IR.
+#include "../config.h"
+
+char* ir_make_n_ident(char* prefix, int n);
+#if IR_ENABLE
 #include "../utils/utils_list.h"
 #include "../parser/parser.h"
 
@@ -157,5 +161,4 @@ list(ir_instruction_node*)* block_item_to_ir(block_item_node* block_item);
 
 // prints TAC AST.
 void ir_print_program(ir_program_node* program_ir);
-
-char* ir_make_n_ident(char* prefix, int n);
+#endif

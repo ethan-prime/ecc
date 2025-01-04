@@ -65,6 +65,11 @@ typedef struct {
     struct expr_node* condition_false;
 } ternary_node;
 
+typedef struct {
+    char* identifier;
+    list(struct expr_node*)* args;
+} function_call_node;
+
 typedef enum {
     EXPR_CONSTANT,
     EXPR_UNARY,
@@ -72,6 +77,7 @@ typedef enum {
     EXPR_VARIABLE,
     EXPR_ASSIGN,
     EXPR_TERNARY,
+    EXPR_FUNCTION_CALL,
 } expr_type;
 
 typedef struct expr_node {
@@ -83,12 +89,37 @@ typedef struct expr_node {
         variable_node* variable;
         assign_node* assign;
         ternary_node* ternary;
+        function_call_node* function_call;
     } expr;
 } expr_node;
 
 typedef struct {
     char* identifier;
     expr_node* init; // optional
+} variable_declaration_node;
+
+typedef struct {
+    char* identifier;
+} param_node;
+
+struct block_node;
+typedef struct {
+    char* name;
+    list(param_node*)* params;
+    struct block_node* body;
+} function_declaration_node;
+
+typedef enum {
+    DECLARE_VARIABLE,
+    DECLARE_FUNCTION,
+} declaration_type;
+
+typedef struct {
+    declaration_type type;
+    union {
+        variable_declaration_node* variable;
+        function_declaration_node* function;
+    } declaration;
 } declaration_node;
 
 typedef struct return_node {
@@ -135,7 +166,7 @@ typedef enum {
 typedef struct {
     for_init_type type;
     union {
-        declaration_node* init_declare;
+        variable_declaration_node* init_declare;
         expr_node* init_expr;
     } for_init;
 } for_init_node;
@@ -193,13 +224,8 @@ typedef struct block_node {
     list(block_item_node*)* items;
 } block_node;
 
-typedef struct function_node {
-    char* identifier;
-    block_node* body;
-} function_node;
-
 typedef struct program_node {
-    function_node* function;
+    list(function_declaration_node*)* functions;
 } program_node;
 
 // pretty-prints the ast of the program.
@@ -208,3 +234,6 @@ void print_statement(statement_node* stmt, int depth);
 void print_expr(expr_node* expr, int depth);
 void print_block(block_node* block, int depth);
 void print_block_item(block_item_node* block_item, int depth);
+void print_function_declare(function_declaration_node* decl, int depth);
+void print_variable_declare(variable_declaration_node* decl, int depth);
+void print_declare(declaration_node* decl, int depth);

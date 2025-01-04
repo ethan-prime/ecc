@@ -1,3 +1,5 @@
+#include "../config.h"
+#if ASM_ENABLE
 #include "passes.h"
 #include "asm_ast.h"
 #include "../utils/stackmap.h"
@@ -203,3 +205,4 @@ void add_stackalloc_function_cleanup_operands(asm_program_node *program)
 {
     add_stackalloc_function_cleanup_operands_function(program->function);
 }
+#endif

@@ -56,6 +56,7 @@ typedef enum {
     KEYW_FOR,
     KEYW_BREAK,
     KEYW_CONTINUE,
+    COMMA,
 } token_id;
 
 typedef union {

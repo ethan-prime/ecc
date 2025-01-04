@@ -1,0 +1,6 @@
+#define LEXER_ENABLE 1
+#define PARSER_ENABLE 1
+#define IR_ENABLE 0
+#define SEMANTICS_ENABLE 1
+#define ASM_ENABLE 0
+#define CODEGEN_ENABLE 0

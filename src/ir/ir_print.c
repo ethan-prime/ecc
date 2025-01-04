@@ -1,3 +1,5 @@
+#include "../config.h"
+#if IR_ENABLE
 #include "ir.h"
 
 void ir_print_val(ir_val_node* val) {
@@ -136,3 +138,4 @@ void ir_print_function(ir_function_node* func) {
 void ir_print_program(ir_program_node *program) {
     ir_print_function(program->function);
 }
+#endif

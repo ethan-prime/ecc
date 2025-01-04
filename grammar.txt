@@ -1,9 +1,11 @@
-<program> ::= <function>
-<function> ::= "int" <identifier> "(" "void" ")" <block>
+<program> ::= { <function-declaration> }
+<declaration> ::= <variable-declaration> | <function-declaration>
+<variable-declaration> ::= "int" <identifier> [ "=" <exp> ] ";"
+<function-declaration> ::= "int" <identifier> "(" <param-list> ")" ( <block> | ";")
+<param-list> ::= "void" | "int" <identifier> { "," "int" <identifier> }
 <block> ::= "{" { <block-item> } "}"
 <block-item> ::= <statement> | <declaration>
-<declaration> ::= "int" <identifier> [ "=" <exp> ] ";"
-<for-init> ::= <declaration> | [ <exp> ] ";"
+<for-init> ::= <variable-declaration> | [ <exp> ] ";"
 <statement> ::= "return" <exp> ";"
             | <exp> ";"
             | "if" "(" <exp> ")" <statement> [ "else" <statement> ]
@@ -16,6 +18,8 @@
             | ";"
 <exp> ::= <factor> | <exp> <binop> <exp> | <exp> "?" <exp> ":" <exp>
 <factor> ::= <int> | <identifier> | <unop> <factor> | "(" <exp> ")"
+                    | <identifier> "(" [ <argument-list> ] ")"
+<argument-list> ::= <exp> { "," <exp> }
 <unop> ::= "-" | "~" | "!"
 <binop> ::= "-" | "+" | "*" | "/" | "%" | "&&" | "||"
         | "==" | "!=" | "<" | "<=" | ">" | ">=" | "="

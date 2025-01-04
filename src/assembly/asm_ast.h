@@ -1,3 +1,5 @@
+#include "../config.h"
+#if ASM_ENABLE
 #include "../utils/utils_list.h"
 #include "../parser/parser.h"
 #include "../ir/ir.h"
@@ -231,3 +233,4 @@ asm_immediate_node *asm_create_immediate(int n);
 
 #define IMMEDIATE(n) (asm_create_immediate_operand(n))
 #define REGISTER(r) (asm_create_register_operand(r))
+#endif

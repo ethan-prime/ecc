@@ -1,3 +1,5 @@
+#include "../config.h"
+#if ASM_ENABLE
 #include "asm_ast.h"
 #include <stdlib.h>
 
@@ -521,3 +523,4 @@ asm_program_node *ir_program_to_asm(ir_program_node *program)
 
     return node;
 }
+#endif

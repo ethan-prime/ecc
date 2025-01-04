@@ -1,3 +1,6 @@
+#include "../config.h"
+#if 0
+#if SEMANTICS_ENABLE
 #include "semantics.h"
 #include <stdlib.h>
 #include "../ir/ir.h"
@@ -60,3 +63,5 @@ void label_function(function_node* func) {
 void label_program(program_node* program) {
     label_function(program->function);
 }
+#endif
+#endif

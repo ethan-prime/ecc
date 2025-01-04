@@ -1,3 +1,5 @@
+#include "../config.h"
+#if CODEGEN_ENABLE
 #include "codegen.h"
 #include <stdio.h>
 
@@ -282,3 +284,4 @@ void emit_program(FILE *file, asm_program_node *program)
     fprintf(file, "\n");
     fprintf(file, ".section .note.GNU-stack,\"\",@progbits\n");
 }
+#endif

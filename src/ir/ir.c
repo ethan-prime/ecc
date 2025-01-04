@@ -1,14 +1,8 @@
-#include "ir.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include "../config.h"
 #include <math.h>
+#include <stdlib.h>
 #include <string.h>
 #define MALLOC(type) ((type *)malloc(sizeof(type)))
-
-int IR_VAR_IDX = 0;
-int IR_FALSE_IDX = 0;
-int IR_END_IDX = 0;
-int IR_ELSE_IDX = 0;
 
 // converts n to string repr, stores at *buf. MAKE SURE TO MALLOC floor(log10(n)) + 2 bytes (n_places + 1).
 void int_to_str(char* buf, int n, int n_places) {
@@ -33,6 +27,16 @@ char* ir_make_n_ident(char* prefix, int n) {
     int_to_str(&res[strlen(prefix)], n, n_places);
     return res;
 }
+
+#if IR_ENABLE
+
+#include "ir.h"
+#include <stdio.h>
+
+int IR_VAR_IDX = 0;
+int IR_FALSE_IDX = 0;
+int IR_END_IDX = 0;
+int IR_ELSE_IDX = 0;
 
 char* ir_make_temp_var() {
     char* res = ir_make_n_ident("tmp.", IR_VAR_IDX);
@@ -581,3 +585,4 @@ ir_program_node* program_to_ir(program_node *program) {
 
 // prints TAC AST.
 void ir_print_program(ir_program_node* program_ir);
+#endif

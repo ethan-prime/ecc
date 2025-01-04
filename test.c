@@ -1,10 +1,11 @@
+int add(int x, int y) {
+    return x + y;
+}
+
 int main(void) {
-    int n = 10;
-    int m = 0;
-    while (n-- || (m % 2)) {
-        m += n;
-        if (m > 10)
-            break;
+    int z = add(2, 4);
+    if (z == 6) {
+        return 1;
     }
-    return m;       
+    return 0;
 }

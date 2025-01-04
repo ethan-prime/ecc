@@ -19,14 +19,14 @@ expr_node* expr_node_copy(expr_node* expr); // used in parsing
 
 return_node* parse_return(token_queue* tq);
 
+variable_declaration_node* parse_variable_declaration(token_queue* tq);
+function_declaration_node* parse_function_declaration(token_queue* tq);
 declaration_node* parse_declaration(token_queue* tq);
 
 statement_node* parse_statement(token_queue* tq);
 compound_node* parse_compound_statement(token_queue* tq);
 
 block_node* parse_block(token_queue* tq);
-
-function_node* parse_function(token_queue* tq);
 
 program_node* parse_program(token_queue* tq);
 

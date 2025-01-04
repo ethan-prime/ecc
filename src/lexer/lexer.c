@@ -1,3 +1,5 @@
+#include "../config.h"
+#if LEXER_ENABLE
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -168,6 +170,9 @@ token* lexer_next_token(lexer_t* lexer) {
         lexer_read_char(lexer);
     } else if (lexer->cur_char == '~') {
         t->id = TILDE;
+        lexer_read_char(lexer);
+    } else if (lexer->cur_char == ',') {
+        t->id = COMMA;
         lexer_read_char(lexer);
     } else if (lexer->cur_char == '+') {
         lexer_read_char(lexer);
@@ -407,7 +412,9 @@ void print_token(token t) {
         case KEYW_BREAK:
             printf("break"); break;
         case KEYW_CONTINUE:
-            printf("continue"); break;                             
+            printf("continue"); break;
+        case COMMA:
+            printf(","); break;                             
         default:
             printf("UNKNOWN TOKEN\n");
             exit(1);
@@ -432,3 +439,4 @@ token_queue* lexer_tokenize(lexer_t* lexer) {
 
     return tq;
 }
+#endif

@@ -1,9 +1,10 @@
-program = Program(function_definition)
-function_definition = Function(identifier name, block body)
+program = Program(function_declaration*)
+declaration = FunDecl(function_declaration) | VarDecl(variable_declaration)
+variable_declaration = (identifier name, exp? init)
+function_declaration = (identifier name, identifier* params, block? body)
 block_item = S(statement) | D(declaration)
 block = Block(block_item*)
-declaration = Declaration(identifier name, exp? init)
-for_init = InitDecl(declaration) | InitExp(exp?)
+for_init = InitDecl(variable_declaration) | InitExp(exp?)
 statement = Return(exp)
             | Expression(exp)
             | If(exp condition, statement then, statement? else)
@@ -20,6 +21,7 @@ exp = Constant(int)
     | Binary(binary_operator, exp, exp)
     | Assignment(exp, exp)
     | Conditional(exp condition, exp, exp)
+    | FunctionCall(identifier, exp* args)
 unary_operator = Complement | Negate | Not
 binary_operator = Add | Subtract | Multiply | Divide | Remainder | And | Or
                 | Equal | NotEqual | LessThan | LessOrEqual
