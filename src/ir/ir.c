@@ -172,6 +172,18 @@ ir_instruction_node* ir_create_label_instr(char* identifier) {
     return i;
 }
 
+ir_instruction_node* ir_create_function_call_instr(char* function_name, list(ir_val_node*)* args, ir_val_node* dest) {
+    ir_function_call_node* node = MALLOC(ir_function_call_node);
+    node->function_name = function_name;
+    node->args = args;
+    node->dest = dest;
+
+    ir_instruction_node* i = MALLOC(ir_instruction_node);
+    i->type = IR_INSTR_FUNCTION_CALL;
+    i->instruction.function_call = node;
+    return i;
+}
+
 
 ir_unary_op unary_op_to_ir(unary_op op) {
     if (op == COMPLEMENT) {
@@ -282,6 +294,21 @@ ir_val_node* ternary_to_ir(ternary_node* ternary, list(ir_instruction_node*)* in
     return res;
 }
 
+ir_val_node* function_call_to_ir(function_call_node* call, list(ir_instruction_node*)* instrs) {
+    // evaluate all the args
+    list(ir_val_node*)* arg_list = list_init();
+    for (int i = 0; i < call->args->len; i++) {
+        expr_node* arg = (expr_node*)list_get(call->args, i);
+        ir_val_node* res = expr_to_ir(arg, instrs);
+        list_append(arg_list, (void*)res);
+    }
+
+    ir_val_node* call_result = ir_create_var(ir_make_temp_var());
+    ir_instruction_node* func_call = ir_create_function_call_instr(call->identifier, arg_list, call_result);
+    list_append(instrs, (void*)func_call);
+    return call_result;
+}
+
 // appends instructions to generate expr -> ir, returns ir_val_node with DEST ir val.
 ir_val_node* expr_to_ir(expr_node* expr, list(ir_instruction_node *)* instructions) {
     if (expr == NULL) {
@@ -357,6 +384,8 @@ ir_val_node* expr_to_ir(expr_node* expr, list(ir_instruction_node *)* instructio
         return assign_to_ir(expr->expr.assign, instructions);
     } else if (expr->type == EXPR_TERNARY) {
         return ternary_to_ir(expr->expr.ternary, instructions);
+    } else if (expr->type == EXPR_FUNCTION_CALL) {
+        return function_call_to_ir(expr->expr.function_call, instructions);
     }
     // invalid instruction, unreachable...
     return NULL;
@@ -466,7 +495,7 @@ void while_to_ir(while_node* while_node, list(ir_instruction_node*)* instrs) {
 
 void for_init_to_ir(for_init_node* for_init, list(ir_instruction_node*)* instrs) {
     if (for_init->type == INIT_DECL) {
-        list_concat(instrs, declaration_to_ir(for_init->for_init.init_declare));
+        list_concat(instrs, variable_declaration_to_ir(for_init->for_init.init_declare));
     } else {
         expr_to_ir(for_init->for_init.init_expr, instrs);
     }
@@ -533,7 +562,7 @@ list(ir_instruction_node *)* statement_to_ir(statement_node *stmt) {
     return instrs;
 }
 
-list(ir_instruction_node*)* declaration_to_ir(declaration_node* declare) {
+list(ir_instruction_node*)* variable_declaration_to_ir(variable_declaration_node* declare) {
     list(ir_instruction_node*)* instrs = list_init();
     if (declare->init != NULL) {
         // handle this like an assignment
@@ -543,6 +572,37 @@ list(ir_instruction_node*)* declaration_to_ir(declaration_node* declare) {
         list_append(instrs, (void*)copy);
     }
     return instrs;
+}
+
+list(ir_param_node*)* params_to_ir(list(param_node*)* params) {
+    list(ir_param_node*)* ir_params = list_init();
+    for (int i = 0; i < params->len; i++) {
+        ir_param_node* ir_param = MALLOC(ir_param_node);
+        ir_param->identifier = ((param_node*)list_get(params, i))->identifier;
+        list_append(ir_params, (void*)ir_param);
+    }
+    return ir_params;
+}
+
+ir_function_node* function_declaration_to_ir(function_declaration_node* declare) {
+    if (declare->body == NULL) {
+        return NULL;
+    }
+    ir_function_node* node = MALLOC(ir_function_node);
+    node->identifier = declare->name;
+    node->params = params_to_ir(declare->params);
+    node->instructions = block_to_ir(declare->body);
+    return node;
+}
+
+list(ir_instruction_node*)* declaration_to_ir(declaration_node* declare) {
+    if (declare->type == DECLARE_FUNCTION) {
+        return NULL;
+    } else {
+        return variable_declaration_to_ir(declare->declaration.variable);
+    } 
+    //definitions will always be top-level, so we dont need to worry about reaching 
+    // a function declaration here because we process those before everything else
 }
 
 list(ir_instruction_node*)* block_item_to_ir(block_item_node* block_item) {
@@ -558,27 +618,24 @@ list(ir_instruction_node*)* block_to_ir(block_node* block) {
 
     for (int i = 0; i < block->items->len; i++) {
         block_item_node* block_item = (block_item_node*)list_get(block->items, i);
-        list_concat(instrs, block_item_to_ir(block_item)); // add instrs to body...
+        list(ir_instruction_node*)* new_instrs = block_item_to_ir(block_item);
+        if (new_instrs != NULL) {
+            list_concat(instrs, new_instrs); // add instrs to body...
+        }
     }
 
     return instrs;
 }
 
-ir_function_node* function_to_ir(function_node *function) {
-    ir_function_node* node = MALLOC(ir_function_node);
-    node->identifier = function->identifier;
-    
-    node->instructions = block_to_ir(function->body);
-
-    add_return_0(node->instructions); // in case the function forgets a return value, return 0. c standard
-
-    return node;
-}
-
 ir_program_node* program_to_ir(program_node *program) {
     ir_program_node* node = MALLOC(ir_program_node);
 
-    node->function = function_to_ir(program->function);
+    node->functions = list_init();
+
+    for (int i = 0; i < program->functions->len; i++) {
+        function_declaration_node* func = (function_declaration_node*)list_get(program->functions, i);
+        list_append(node->functions, (void*)function_declaration_to_ir(func));
+    }
 
     return node;
 }

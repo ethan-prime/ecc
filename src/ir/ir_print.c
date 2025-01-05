@@ -106,6 +106,18 @@ void ir_print_label(ir_label_node* label) {
     printf("Label(%s)\n", label->identifier);
 }
 
+void ir_print_function_call(ir_function_call_node* call) {
+    printf("Call(%s, [", call->function_name);
+    for (int i = 0; i < call->args->len; i++) {
+        ir_val_node* arg = (ir_val_node*)list_get(call->args, i);
+        ir_print_val(arg);
+        printf(", ");
+    }
+    printf("], ");
+    ir_print_val(call->dest);
+    printf(")\n");
+}
+
 void ir_print_instructions(list(ir_instruction_node)* instrs) {
     for(int i = 0; i < instrs->len; i++) {
         ir_instruction_node* instr = (ir_instruction_node*)list_get(instrs, i);
@@ -125,17 +137,32 @@ void ir_print_instructions(list(ir_instruction_node)* instrs) {
             ir_print_jumpnz(instr->instruction.jumpnz);
         } else if (instr->type == IR_INSTR_LABEL) {
             ir_print_label(instr->instruction.label);
+        } else if (instr->type == IR_INSTR_FUNCTION_CALL) {
+            ir_print_function_call(instr->instruction.function_call);
         }
     }
 }
 
 void ir_print_function(ir_function_node* func) {
     printf("FUNCTION %s:\n", func->identifier);
+    if (func->params->len == 0) {
+        printf("params=None\n");
+    } else {
+        printf("params=");
+        for (int i = 0; i < func->params->len; i++) {
+            ir_param_node* param = (ir_param_node*)list_get(func->params, i);
+            printf("%s, ", param->identifier);
+        }
+        printf("\n");
+    }
     ir_print_instructions(func->instructions);
 }
 
 // pretty-prints the ast of the program.
 void ir_print_program(ir_program_node *program) {
-    ir_print_function(program->function);
+    for (int i = 0; i < program->functions->len; i++) {
+        ir_function_node* func = (ir_function_node*)list_get(program->functions, i);
+        ir_print_function(func);
+    }
 }
 #endif

@@ -102,6 +102,12 @@ typedef struct {
     char* identifier;
 } ir_label_node;
 
+typedef struct {
+    char* function_name;
+    list(ir_val_node*)* args;
+    ir_val_node* dest;
+} ir_function_call_node;
+
 typedef enum
 {
     IR_INSTR_RET,
@@ -112,6 +118,7 @@ typedef enum
     IR_INSTR_JUMPZ,
     IR_INSTR_JUMPNZ,
     IR_INSTR_LABEL,
+    IR_INSTR_FUNCTION_CALL,
 } ir_instruction_type;
 
 typedef struct
@@ -127,26 +134,32 @@ typedef struct
         ir_jumpz_node* jumpz;
         ir_jumpnz_node* jumpnz;
         ir_label_node* label;
+        ir_function_call_node* function_call;
     } instruction;
 } ir_instruction_node;
+
+typedef struct {
+    char* identifier;
+} ir_param_node;
 
 typedef struct ir_function_node
 {
     char* identifier;
+    list(ir_param_node*)* params;
     list(ir_instruction_node*)* instructions;
 } ir_function_node;
 
 typedef struct ir_program_node
 {
-    ir_function_node* function;
+    list(ir_function_node*)* functions;
 } ir_program_node;
 
 // used for creating temperorary variables
 char* ir_make_temp_var();
 
 ir_program_node* program_to_ir(program_node *program);
-ir_function_node* function_to_ir(function_node *function);
-
+ir_function_node* function_declaration_to_ir(function_declaration_node *function);
+list(ir_instruction_node*)* variable_declaration_to_ir(variable_declaration_node* declare);
 list(ir_instruction_node*)* declaration_to_ir(declaration_node* declare);
 
 // STATEMENTS:
