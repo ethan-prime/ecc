@@ -18,7 +18,7 @@ typedef struct {
 typedef hashmap symboltable;
 
 typedef struct {
-    type_specifier* type;
+    type_specifier* type_spec;
     int defined; // 0 or 1.
 } symboltable_node;
 
@@ -26,3 +26,4 @@ symboltable* symboltable_init();
 void symboltable_add(symboltable* table, char* name, type_t type, int param_count, int defined);
 #define NO_PARAMS 0
 symboltable_node* symboltable_get(symboltable* table, char* name);
+void symboltable_print(symboltable* table);

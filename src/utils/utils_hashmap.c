@@ -28,6 +28,13 @@ hashmap* hashmap_init(int n_buckets, int (*hash_function)(char*)) {
     return map;
 }
 
+hashmap_node* create_hashmap_node(char* key, void* value) {
+    hashmap_node* node = (hashmap_node *)malloc(sizeof(hashmap_node));
+    node->key = key;
+    node->value = value;
+    return node;
+}
+
 void* hashmap_get(hashmap* map, char* key) {
     int bucket = map->hash_function(key) % map->n_buckets;
     list(hashmap_node*)* l = map->buckets[bucket];
@@ -48,10 +55,12 @@ void hashmap_add(hashmap* map, char* key, void* value) {
         hashmap_node* node = (hashmap_node *)list_get(l, i);
         if (strcmp(node->key, key) == 0) {
             node->value = value;
+            return;
         }
     }
     // else, just add it.
-    list_append(l, value);
+    hashmap_node* node = create_hashmap_node(key, value);
+    list_append(l, (void*)node);
 }
 
 void hashmap_remove(hashmap* map, char* key) {

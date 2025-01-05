@@ -1,5 +1,4 @@
 #include "../config.h"
-#if 0
 #if SEMANTICS_ENABLE
 #include "semantics.h"
 #include <stdlib.h>
@@ -56,12 +55,17 @@ void label_statement(statement_node* statement, char* loop_label) {
     }
 }
 
-void label_function(function_node* func) {
-    label_block(func->body, NULL);
+void label_function_declaration(function_declaration_node* func) {
+    if (func->body != NULL) {
+        label_block(func->body, NULL);
+    }
 }
 
 void label_program(program_node* program) {
-    label_function(program->function);
+    for (int i = 0; i < program->functions->len; i++) {
+        function_declaration_node* func = (function_declaration_node*)list_get(program->functions, i);
+        label_function_declaration(func);
+    }
 }
-#endif
+
 #endif

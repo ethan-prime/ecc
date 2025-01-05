@@ -8,31 +8,6 @@
 int USER_DEFINED_COUNTER = 0;
 int PARAM_COUNTER = 0;
 
-void semantic_error(char *message)
-{
-    printf("***semantic error:***\n");
-    printf("%s\n", message);
-    exit(1);
-}
-
-void semantic_error_declared_twice(char *identifier, identifiermap *im)
-{
-    printf("***semantic error:***\n");
-    printf("variable %s redeclared\n", identifier);
-    printf("variable map at exit:\n");
-    identifiermap_print(im);
-    exit(1);
-}
-
-void semantic_error_undefined(char *identifier, identifiermap *im)
-{
-    printf("***semantic error:***\n");
-    printf("variable %s undefined\n", identifier);
-    printf("variable map at exit:\n");
-    identifiermap_print(im);
-    exit(1);
-}
-
 void resolve_expr(identifiermap *im, expr_node *expr)
 {
     if (expr->type == EXPR_ASSIGN)
@@ -80,6 +55,7 @@ void resolve_expr(identifiermap *im, expr_node *expr)
         {
             semantic_error_undefined(expr->expr.function_call->identifier, im);
         }
+        expr->expr.function_call->identifier = res->value;
         // resolve all arguments of function call
         for (int i = 0; i < expr->expr.function_call->args->len; i++) {
             resolve_expr(im, (expr_node*)list_get(expr->expr.function_call->args, i));
@@ -267,6 +243,7 @@ void resolve_program(program_node *program)
         function_declaration_node* func = (function_declaration_node*)list_get(program->functions, i);
         resolve_function_declaration(im, func);
     }
+    identifiermap_print(im);
 }
 
 #endif

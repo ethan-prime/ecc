@@ -317,9 +317,11 @@ void print_function_declare(function_declaration_node* func, int depth) {
         }
         printf("\n");
     }
-    print_tabs(depth+1);
-    printf("body=\n");
-    print_block(func->body, depth + 1);
+    if (func->body != NULL) {
+        print_tabs(depth+1);
+        printf("body=\n");
+        print_block(func->body, depth + 1);
+    }
     print_tabs(depth);
     printf(")\n");
 }

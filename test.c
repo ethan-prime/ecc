@@ -3,9 +3,10 @@ int add(int x, int y) {
 }
 
 int main(void) {
-    int z = add(2, 4);
-    if (z == 6) {
+    int z = add(9, 10);
+    if (z == 21) {
         return 1;
+    } else {
+        return 0;
     }
-    return 0;
 }

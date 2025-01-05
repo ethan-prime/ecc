@@ -13,6 +13,7 @@
 #endif
 #if SEMANTICS_ENABLE
 #include "semantics/semantics.h"
+#include "utils/symboltable.h"
 #endif
 #if ASM_ENABLE
 #include "assembly/asm_ast.h"
@@ -53,13 +54,13 @@ int main(int argc, char** argv) {
             list_append(files, (void*)argv[i]);
         } else if (strcmp(argv[i], "-c") == 0) {
             object_file = 1;
-        } else if (strcmp(argv[i], "--lex")) {
+        } else if (strcmp(argv[i], "--lex") == 0) {
             lex = true;
-        } else if (strcmp(argv[i], "--parse")) {
+        } else if (strcmp(argv[i], "--parse") == 0) {
             parse = true;
-        } else if (strcmp(argv[i], "--tacky")) {
+        } else if (strcmp(argv[i], "--tacky") == 0) {
             tacky = true;
-        } else if (strcmp(argv[i], "--codegen")) {
+        } else if (strcmp(argv[i], "--codegen") == 0) {
             codegen = true;
         }
     }
@@ -88,11 +89,15 @@ int main(int argc, char** argv) {
         // semantic pass
         #if SEMANTICS_ENABLE
         resolve_program(program);
-        //label_program(program);
+        label_program(program);
+        symboltable* symbols = symboltable_init();
+        typecheck_program(symbols, program);
         #endif
 
         printf("Parsed program:\n");
         print_ast(program);
+        printf("Symbol table:\n");
+        symboltable_print(symbols);
 
         if (parse) {
             exit(0);

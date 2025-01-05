@@ -33,6 +33,7 @@ int identifiermap_edit_name(identifiermap *im, char *key, char *new_value)
         {
             node->value = new_value;
             node->from_current_scope = 1;
+            return 1;
         }
     }
     return 0;
