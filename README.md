@@ -1,5 +1,6 @@
 # ecc
 Ethan's C Compiler, written in C! (for Linux)
+Following Nora Sandler's "Writing a C Compiler" book
 
 ## Dependencies
 - gcc
