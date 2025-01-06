@@ -1,21 +1,22 @@
 # ecc
-Ethan's C Compiler, written in C!
+Ethan's C Compiler, written in C! (for Linux)
+
+## Dependencies
+- gcc
 
 ## Status
-```
-features:
-- types: int
-- if statements
-- return statements
-- local variables
-- unary expressions (!, -, ~)
-- arbitrary binary expressions
-- compound statements
-- while, do while, and for loops
-- function calls!
-- library functions
-- compiling to object files
-```
+Features:
+- Types: int
+- If Statements
+- Return Statements
+- Local Variables
+- Unary Expressions (!, -, ~)
+- Binary Expressions (arbitrarily complex)
+- Compound Statements
+- While, Do While, and For Loops
+- Function Calls
+- Library Functions
+- Compiling to Object Files (-c)
 
 ```
 printint.c - prints int to stdout:
