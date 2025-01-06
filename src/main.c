@@ -127,11 +127,8 @@ int main(int argc, char** argv) {
             exit(0);
         }
 
-        char* dest_file = (char*)malloc(sizeof((strlen(source_file)+1)*sizeof(char)));
-        strncpy(dest_file, source_file, strlen(source_file)-2);
-        dest_file[strlen(source_file)-2] = '.';
-        dest_file[strlen(source_file)-1] = 's';
-        dest_file[strlen(source_file)] = '\0';
+        char* dest_file = strdup(source_file);
+        dest_file[strlen(dest_file)-1] = 's';
 
         list_append(asm_files, (void*)dest_file);
 
@@ -142,7 +139,7 @@ int main(int argc, char** argv) {
             panic("Error opening file");
         }
 
-        emit_program(file, program_asm);
+        emit_program(file, program_asm, symbols);
 
         fclose(file);
         #endif

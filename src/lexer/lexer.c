@@ -137,7 +137,7 @@ token* lexer_next_token(lexer_t* lexer) {
             buf[index] = lexer->cur_char;
             index++;
             lexer_read_char(lexer);
-        } while (isalnum(lexer->cur_char) && lexer->pos < lexer->file_size);
+        } while ((isalnum(lexer->cur_char) || lexer->cur_char == '_') && lexer->pos < lexer->file_size);
         buf[index] = '\0';
 
         t->val.s = malloc((strlen(buf)+1)*sizeof(char));

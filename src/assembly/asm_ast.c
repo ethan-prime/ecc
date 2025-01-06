@@ -59,6 +59,31 @@ operand_node *asm_create_immediate_operand(int n)
 }
 #define IMMEDIATE(n) (asm_create_immediate_operand(n))
 
+operand_node* asm_create_pseudo_operand(char* identifier) {
+    operand_node* operand = MALLOC(operand_node);
+    operand->type = PSEUDO;
+    operand->operand.pseudo = asm_create_pseudo(identifier);
+
+    return operand;
+}
+#define CREATE_PSEUDO(i) (asm_create_pseudo_operand(i))
+
+asm_stack_node* asm_create_stack(int offset) {
+    asm_stack_node* s = MALLOC(asm_stack_node);
+    s->offset = offset;
+
+    return s;
+}
+
+operand_node* asm_create_stack_operand(int offset) {
+    operand_node* operand = MALLOC(operand_node);
+    operand->type = STACK;
+    operand->operand.stack = asm_create_stack(offset);
+
+    return operand;
+}
+#define CREATE_STACK(o) (asm_create_stack_operand(o))
+
 asm_i *asm_create_mov_instr(op_size size, operand_node *src, operand_node *dest)
 {
     asm_move_node *node = MALLOC(asm_move_node);
@@ -190,6 +215,39 @@ asm_i *asm_create_label_instr(char *identifier)
     node->identifier = identifier;
 
     instr->instruction.label = node;
+
+    return instr;
+}
+
+asm_i* asm_create_push_instr(operand_node* op) {
+    asm_i *instr = MALLOC(asm_i);
+    instr->type = INSTR_PUSH;
+
+    asm_push_node* node = MALLOC(asm_push_node);
+    node->op = op;
+    instr->instruction.push = node;
+
+    return instr;
+}
+
+asm_i* asm_create_call_instr(char* identifier) {
+    asm_i* instr = MALLOC(asm_i);
+    instr->type = INSTR_CALL;
+
+    asm_call_node* node = MALLOC(asm_call_node);
+    node->identifier = identifier;
+    instr->instruction.call = node;
+
+    return instr;
+}
+
+asm_i* asm_create_stackdealloc_instr(int size) {
+    asm_i* instr = MALLOC(asm_i);
+    instr->type = INSTR_STACKDEALLOC;
+
+    asm_stackdealloc_node* node = MALLOC(asm_stackdealloc_node);
+    node->n_bytes = size;
+    instr->instruction.stackdealloc = node;
 
     return instr;
 }
@@ -472,12 +530,88 @@ list(asm_i *) * ir_label_to_asm(ir_label_node *label)
     return instrs;
 }
 
+list(asm_i*)* ir_function_call_to_asm(ir_function_call_node* call) {
+    
+    list(asm_i*)* instrs = list_init();
+    
+    asm_register_t reg_args[6] = {DI, SI, DX, CX, R8, R9};
+
+    int n_reg_args = (call->args->len) > 6 ? 6 : call->args->len;
+    int n_stack_args = (call->args->len > 6) ? call->args->len - 6 : 0;
+    int stack_padding = 0;
+
+    if (n_stack_args % 2) {
+        // odd number of stack args, adjust stack alignment
+        stack_padding = 8;
+        asm_i* stack_align = asm_create_stackalloc_instr(stack_padding);
+        list_append(instrs, (void*)stack_align);
+    }
+
+    for (int i = 0; i < n_reg_args; i++) {
+        ir_val_node* arg = (ir_val_node*)list_get(call->args, i);
+        asm_i* mov_arg = asm_create_mov_instr(OP_4_BYTES, OPERAND(arg), REGISTER(reg_args[i]));
+        list_append(instrs, (void*)mov_arg);
+    }
+
+    for (int i = 6+n_stack_args-1; i >= 6; i--) {
+        ir_val_node* arg = (ir_val_node*)list_get(call->args, i);
+        operand_node* arg_op = OPERAND(arg);
+        if (arg_op->type == REG || arg_op->type == IMM) {
+            asm_i* push_arg = asm_create_push_instr(arg_op);
+            list_append(instrs, (void*)push_arg);
+        } else {
+            asm_i* mov_arg = asm_create_mov_instr(OP_4_BYTES, arg_op, REGISTER(AX));
+            asm_i* push_arg = asm_create_push_instr(REGISTER(AX));
+            list_append(instrs, (void*)mov_arg);
+            list_append(instrs, (void*)push_arg);
+        }
+    }
+
+    // call the function
+    asm_i* call_func = asm_create_call_instr(call->function_name);
+    list_append(instrs, (void*)call_func);
+
+    int n_bytes_dealloc = 8*n_stack_args + stack_padding;
+    if (n_bytes_dealloc != 0) {
+        // we need to deallocate the space on the stack used to push arguments
+        // after the function executes
+        asm_i* stack_dealloc = asm_create_stackdealloc_instr(n_bytes_dealloc);
+        list_append(instrs, (void*)stack_dealloc);
+    }
+
+    // get return value
+    asm_i* mov_ret = asm_create_mov_instr(OP_4_BYTES, REGISTER(AX), OPERAND(call->dest));
+    list_append(instrs, (void*)mov_ret);
+
+    return instrs;
+}
+
 asm_function_node *ir_function_to_asm(ir_function_node *function)
 {
     asm_function_node *node = MALLOC(asm_function_node);
     node->identifier = function->identifier;
 
     list(asm_i *) *instrs = list_init();
+
+    // copy params onto stack...
+    asm_register_t reg_params[6] = {DI, SI, DX, CX, R8, R9};
+
+    for (int i = 0; i < function->params->len; i++) {
+        ir_param_node* param = (ir_param_node*)list_get(function->params, i);
+        operand_node* param_pseudo = CREATE_PSEUDO(param->identifier);
+        asm_i* mov_param;
+        if (i < 6) {
+            mov_param = asm_create_mov_instr(OP_4_BYTES, REGISTER(reg_params[i]), param_pseudo);
+        } else {
+            // stack operands
+            int offset = (16 + (i-6)*8);
+            mov_param = asm_create_mov_instr(OP_4_BYTES, CREATE_STACK(offset), param_pseudo);
+        }
+        // add mov instr to list of instrs for function
+        list_append(instrs, (void*)mov_param);
+    }
+
+    // do function body!
     for (int i = 0; i < function->instructions->len; i++)
     {
         ir_instruction_node *instr = (ir_instruction_node *)list_get(function->instructions, i);
@@ -507,6 +641,9 @@ asm_function_node *ir_function_to_asm(ir_function_node *function)
         case IR_INSTR_LABEL:
             list_concat(instrs, ir_label_to_asm(instr->instruction.label));
             break;
+        case IR_INSTR_FUNCTION_CALL:
+            list_concat(instrs, ir_function_call_to_asm(instr->instruction.function_call));
+            break;
         }
     }
     node->instructions = instrs;
@@ -519,7 +656,13 @@ asm_program_node *ir_program_to_asm(ir_program_node *program)
 {
     asm_program_node *node = MALLOC(asm_program_node);
 
-    node->function = ir_function_to_asm(program->function);
+    node->functions = list_init();
+
+    for (int i = 0; i < program->functions->len; i++) {
+        ir_function_node* ir_func = (ir_function_node*)list_get(program->functions, i);
+        asm_function_node* asm_func = ir_function_to_asm(ir_func);
+        list_append(node->functions, (void*)asm_func);
+    }
 
     return node;
 }

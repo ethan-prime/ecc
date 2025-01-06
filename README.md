@@ -4,69 +4,145 @@ Ethan's C Compiler, written in C!
 ## Status
 ```
 features:
+- types: int
 - if statements
 - return statements
 - local variables
 - arbitrary binary expressions
 - compound statements
 - while, do while, and for loops
+- function calls!
+- library functions
+- compiling to object files
 ```
 
 ```
-calculates the nth fibonacci number.
+printint.c - prints int to stdout:
 ```
 ```c
-int main(void) {
-    int a = 1;
-    int b = 0;
-    for (int i = 2; i <= 9; i++) {
-        int tmp = a;
-        a = a + b;
-        b = tmp;
+int putchar(int c);
+
+int printinthelper(int n) {
+    if (n < 10) {
+        putchar(n + 48);
+    } else {
+        printinthelper(n / 10);
+        putchar(n % 10 + 48);
     }
-    return a;
+}
+
+int printint(int n) {
+    if (n < 0) {
+        putchar(45);
+        printinthelper(-n);
+    } else {
+        printinthelper(n);
+    }
+    putchar(10);
 }
 ```
 
+```
+fib.c - calculates and prints the nth fibonacci number:
+```
+```c
+int printint(int n);
+
+int fibonacci(int n) {
+    if (n <= 1) {
+        return n;
+    }
+    return fibonacci(n - 2) + fibonacci(n - 1);
+}
+
+int main(void) {
+    int fib = fibonacci(11);
+    printint(fib);
+    return 0;
+}
+```
+
+```
+./ecc fib.c printint.c
+```
+
+```
+printint.s
+```
 ```assembly
-.globl main
-main:
+.globl printinthelper
+printinthelper:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $28, %rsp
-	movl $1, -4(%rbp)
+	subq $48, %rsp
+	movl %edi, -4(%rbp)
+	cmpl $10, -4(%rbp)
 	movl $0, -8(%rbp)
-	movl $2, -12(%rbp)
-.L_start_loop.0:
-	cmpl $9, -12(%rbp)
-	movl $0, -16(%rbp)
-	setle -16(%rbp)
-	cmpl $0, -16(%rbp)
-	je .L_break_loop.0
+	setl -8(%rbp)
+	cmpl $0, -8(%rbp)
+	je .L_else.0
 	movl -4(%rbp), %r10d
-	movl %r10d, -20(%rbp)
-	movl -4(%rbp), %r10d
-	movl %r10d, -24(%rbp)
-	movl -8(%rbp), %r10d
-	addl %r10d, -24(%rbp)
-	movl -24(%rbp), %r10d
-	movl %r10d, -4(%rbp)
-	movl -20(%rbp), %r10d
-	movl %r10d, -8(%rbp)
-.L_continue_loop.0:
-	movl -12(%rbp), %r10d
-	movl %r10d, -20(%rbp)
-	addl $1, -20(%rbp)
-	movl -12(%rbp), %r10d
-	movl %r10d, -28(%rbp)
-	movl -20(%rbp), %r10d
 	movl %r10d, -12(%rbp)
-	jmp .L_start_loop.0
-.L_break_loop.0:
+	addl $48, -12(%rbp)
+	movl -12(%rbp), %edi
+	call putchar@PLT
+	movl %eax, -16(%rbp)
+	jmp .L_end.1
+.L_else.0:
 	movl -4(%rbp), %eax
+	cdq
+	movl $10, %r10d
+	idiv %r10d
+	movl %eax, -20(%rbp)
+	movl -20(%rbp), %edi
+	call printinthelper
+	movl %eax, -24(%rbp)
+	movl -4(%rbp), %eax
+	cdq
+	movl $10, %r10d
+	idiv %r10d
+	movl %edx, -28(%rbp)
+	movl -28(%rbp), %r10d
+	movl %r10d, -32(%rbp)
+	addl $48, -32(%rbp)
+	movl -32(%rbp), %edi
+	call putchar@PLT
+	movl %eax, -36(%rbp)
+.L_end.1:
+	movl $0, %eax
 	movq %rbp, %rsp
 	popq %rbp
 	ret
+
+.globl printint
+printint:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $32, %rsp
+	movl %edi, -4(%rbp)
+	cmpl $0, -4(%rbp)
+	movl $0, -8(%rbp)
+	setl -8(%rbp)
+	cmpl $0, -8(%rbp)
+	je .L_else.1
+	movl $45, %edi
+	call putchar@PLT
+	movl %eax, -12(%rbp)
+	movl -4(%rbp), %r10d
+	movl %r10d, -16(%rbp)
+	negl -16(%rbp)
+	movl -16(%rbp), %edi
+	call printinthelper
+	movl %eax, -20(%rbp)
+	jmp .L_end.2
+.L_else.1:
+	movl -4(%rbp), %edi
+	call printinthelper
+	movl %eax, -24(%rbp)
+.L_end.2:
+	movl $10, %edi
+	call putchar@PLT
+	movl %eax, -28(%rbp)
 	movl $0, %eax
 	movq %rbp, %rsp
 	popq %rbp
@@ -75,67 +151,65 @@ main:
 .section .note.GNU-stack,"",@progbits
 ```
 
-```c
-int main(void) {
-    int n = 10;
-    int m = 0;
-    while (n-- || (m % 2)) {
-        m += n;
-        if (m > 10)
-            break;
-    }
-    return m;       
-}
 ```
-
+fib.s
+```
 ```assembly
+.globl fibonacci
+fibonacci:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $32, %rsp
+	movl %edi, -4(%rbp)
+	cmpl $1, -4(%rbp)
+	movl $0, -8(%rbp)
+	setle -8(%rbp)
+	cmpl $0, -8(%rbp)
+	je .L_end.0
+	movl -4(%rbp), %eax
+	movq %rbp, %rsp
+	popq %rbp
+	ret
+.L_end.0:
+	movl -4(%rbp), %r10d
+	movl %r10d, -12(%rbp)
+	subl $2, -12(%rbp)
+	movl -12(%rbp), %edi
+	call fibonacci
+	movl %eax, -16(%rbp)
+	movl -4(%rbp), %r10d
+	movl %r10d, -20(%rbp)
+	subl $1, -20(%rbp)
+	movl -20(%rbp), %edi
+	call fibonacci
+	movl %eax, -24(%rbp)
+	movl -16(%rbp), %r10d
+	movl %r10d, -28(%rbp)
+	movl -24(%rbp), %r10d
+	addl %r10d, -28(%rbp)
+	movl -28(%rbp), %eax
+	movq %rbp, %rsp
+	popq %rbp
+	ret
+	movl $0, %eax
+	movq %rbp, %rsp
+	popq %rbp
+	ret
+
 .globl main
 main:
 	pushq %rbp
 	movq %rsp, %rbp
-	subq $32, %rsp
-	movl $10, -4(%rbp)
-	movl $0, -8(%rbp)
-.L_continue_loop.0:
+	subq $16, %rsp
+	movl $11, %edi
+	call fibonacci
+	movl %eax, -4(%rbp)
 	movl -4(%rbp), %r10d
-	movl %r10d, -12(%rbp)
-	subl $1, -12(%rbp)
-	movl -4(%rbp), %r10d
-	movl %r10d, -16(%rbp)
-	movl -12(%rbp), %r10d
-	movl %r10d, -4(%rbp)
-	cmpl $0, -16(%rbp)
-	jne .L_sc.0
-	movl -8(%rbp), %eax
-	cdq
-	movl $2, %r10d
-	idiv %r10d
-	movl %edx, -20(%rbp)
-	cmpl $0, -20(%rbp)
-	jne .L_sc.0
-	movl $0, -24(%rbp)
-	jmp .L_end.0
-.L_sc.0:
-	movl $1, -24(%rbp)
-.L_end.0:
-	cmpl $0, -24(%rbp)
-	je .L_break_loop.0
-	movl -8(%rbp), %r10d
-	movl %r10d, -28(%rbp)
-	movl -4(%rbp), %r10d
-	addl %r10d, -28(%rbp)
-	movl -28(%rbp), %r10d
 	movl %r10d, -8(%rbp)
-	cmpl $10, -8(%rbp)
-	movl $0, -32(%rbp)
-	setg -32(%rbp)
-	cmpl $0, -32(%rbp)
-	je .L_end.1
-	jmp .L_break_loop.0
-.L_end.1:
-	jmp .L_continue_loop.0
-.L_break_loop.0:
-	movl -8(%rbp), %eax
+	movl -8(%rbp), %edi
+	call printint@PLT
+	movl %eax, -12(%rbp)
+	movl $0, %eax
 	movq %rbp, %rsp
 	popq %rbp
 	ret

@@ -634,7 +634,12 @@ ir_program_node* program_to_ir(program_node *program) {
 
     for (int i = 0; i < program->functions->len; i++) {
         function_declaration_node* func = (function_declaration_node*)list_get(program->functions, i);
-        list_append(node->functions, (void*)function_declaration_to_ir(func));
+        ir_function_node* ir_func = function_declaration_to_ir(func);
+        // remember, we ignore any function without a body.
+        if (ir_func != NULL) {
+            add_return_0(ir_func->instructions);
+            list_append(node->functions, (void*)ir_func);
+        }
     }
 
     return node;

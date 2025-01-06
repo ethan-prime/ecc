@@ -2,6 +2,7 @@
 #if CODEGEN_ENABLE
 #include "codegen.h"
 #include <stdio.h>
+#include "../utils/symboltable.h"
 
 void emit(FILE *file, char *t)
 {
@@ -23,36 +24,82 @@ void emit_register(FILE *file, asm_register_t reg, op_size size)
     case AX:
     if (size == OP_1_BYTE) {
         fprintf(file, "%%al");
-    } else {
+    } else if (size == OP_4_BYTES) {
         fprintf(file, "%%eax");
+    } else if (size == OP_8_BYTES) {
+        fprintf(file, "%%rax");
     }
     break;
     case DX:
     if (size == OP_1_BYTE) {
         fprintf(file, "%%dl");
-    } else {
+    } else if (size == OP_4_BYTES) {
         fprintf(file, "%%edx");
+    } else if (size == OP_8_BYTES) {
+        fprintf(file, "%%rdx");
     }
     break;
     case CX:
     if (size == OP_1_BYTE) {
         fprintf(file, "%%cl");
-    } else {
+    } else if (size == OP_4_BYTES) {
         fprintf(file, "%%ecx");
+    } else if (size == OP_8_BYTES) {
+        fprintf(file, "%%rcx");
+    }
+    break;
+    case DI:
+    if (size == OP_1_BYTE) {
+        fprintf(file, "%%dil");
+    } else if (size == OP_4_BYTES) {
+        fprintf(file, "%%edi");
+    } else if (size == OP_8_BYTES) {
+        fprintf(file, "%%rdi");
+    }
+    break;
+    case SI:
+    if (size == OP_1_BYTE) {
+        fprintf(file, "%%sil");
+    } else if (size == OP_4_BYTES) {
+        fprintf(file, "%%esi");
+    } else if (size == OP_8_BYTES) {
+        fprintf(file, "%%rsi");
+    }
+    break;
+    case R8:
+    if (size == OP_1_BYTE) {
+        fprintf(file, "%%r8b");
+    } else if (size == OP_4_BYTES) {
+        fprintf(file, "%%r8d");
+    } else if (size == OP_8_BYTES) {
+        fprintf(file, "%%r8");
+    }
+    break;
+    case R9:
+    if (size == OP_1_BYTE) {
+        fprintf(file, "%%r9b");
+    } else if (size == OP_4_BYTES) {
+        fprintf(file, "%%r9d");
+    } else if (size == OP_8_BYTES) {
+        fprintf(file, "%%r9");
     }
     break;
     case R10:
     if (size == OP_1_BYTE) {
         fprintf(file, "%%r10b");
-    } else {
+    } else if (size == OP_4_BYTES) {
         fprintf(file, "%%r10d");
+    } else if (size == OP_8_BYTES) {
+        fprintf(file, "%%r10");
     }
     break;
     case R11:
     if (size == OP_1_BYTE) {
         fprintf(file, "%%r11b");
-    } else {
+    } else if (size == OP_4_BYTES) {
         fprintf(file, "%%r11d");
+    } else if (size == OP_8_BYTES) {
+        fprintf(file, "%%r11");
     }
     break;
     }
@@ -69,7 +116,7 @@ void emit_operand(FILE *file, operand_node *op, op_size size)
         emit_register(file, op->operand.reg->reg, size);
         break;
     case STACK:
-        fprintf(file, "-%d(%%rbp)", op->operand.stack->offset);
+        fprintf(file, "%d(%%rbp)", op->operand.stack->offset);
     default:
         break;
     }
@@ -176,6 +223,11 @@ void emit_stackalloc_instr(FILE *file, asm_stackalloc_node *stackalloc)
     fprintf(file, "\tsubq $%d, %%rsp\n", stackalloc->n_bytes);
 }
 
+void emit_stackdealloc_instr(FILE* file, asm_stackdealloc_node* stackdealloc)
+{
+    fprintf(file, "\taddq $%d, %%rsp\n", stackdealloc->n_bytes);
+}
+
 void emit_cmp_instr(FILE* file, asm_cmp_node* cmp) {
     fprintf(file, "\tcmpl ");
     emit_operand(file, cmp->src1, OP_4_BYTES);
@@ -222,7 +274,22 @@ void emit_label_instr(FILE* file, asm_label_node* label) {
     fprintf(file, ".L%s:\n", label->identifier);
 }
 
-void emit_instruction(FILE *file, asm_instruction_node *instr)
+void emit_push_instr(FILE* file, asm_push_node* push) {
+    fprintf(file, "\tpushq ");
+    emit_operand(file, push->op, OP_8_BYTES);
+    fprintf(file, "\n");
+}
+
+void emit_call_instr(FILE* file, asm_call_node* call, symboltable* symbols) {
+    fprintf(file, "\tcall %s", call->identifier);
+    if (!(symboltable_get(symbols, call->identifier)->defined)) {
+        // if the function is undefined, we need to reference the PLT.
+        fprintf(file, "@PLT");
+    }
+    fprintf(file, "\n");
+}
+
+void emit_instruction(FILE *file, asm_instruction_node *instr, symboltable* symbols)
 {
     switch (instr->type)
     {
@@ -237,6 +304,9 @@ void emit_instruction(FILE *file, asm_instruction_node *instr)
         break;
     case INSTR_STACKALLOC:
         emit_stackalloc_instr(file, instr->instruction.stackalloc);
+        break;
+    case INSTR_STACKDEALLOC:
+        emit_stackdealloc_instr(file, instr->instruction.stackdealloc);
         break;
     case INSTR_BINARY:
         emit_binary_instr(file, instr->instruction.binary);
@@ -262,10 +332,15 @@ void emit_instruction(FILE *file, asm_instruction_node *instr)
     case INSTR_LABEL:
         emit_label_instr(file, instr->instruction.label);
         break;
+    case INSTR_PUSH:
+        emit_push_instr(file, instr->instruction.push);
+        break;
+    case INSTR_CALL:
+        emit_call_instr(file, instr->instruction.call, symbols);
     }
 }
 
-void emit_function(FILE *file, asm_function_node *function)
+void emit_function(FILE *file, asm_function_node *function, symboltable* symbols)
 {
     fprintf(file, ".globl %s\n", function->identifier);
     fprintf(file, "%s:\n", function->identifier);
@@ -274,14 +349,17 @@ void emit_function(FILE *file, asm_function_node *function)
     for (int i = 0; i < function->instructions->len; i++)
     {
         asm_instruction_node *instr = (asm_instruction_node *)list_get(function->instructions, i);
-        emit_instruction(file, instr);
+        emit_instruction(file, instr, symbols);
     }
 }
 
-void emit_program(FILE *file, asm_program_node *program)
+void emit_program(FILE *file, asm_program_node *program, symboltable* symbols)
 {
-    emit_function(file, program->function);
-    fprintf(file, "\n");
+    for (int i = 0; i < program->functions->len; i++) {
+        asm_function_node* func = (asm_function_node*)list_get(program->functions, i);
+        emit_function(file, func, symbols);
+        fprintf(file, "\n");
+    }
     fprintf(file, ".section .note.GNU-stack,\"\",@progbits\n");
 }
 #endif

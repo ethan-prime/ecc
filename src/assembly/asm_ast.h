@@ -20,6 +20,10 @@ typedef enum
     AX,
     CX,
     DX,
+    DI,
+    SI,
+    R8,
+    R9,
     R10,
     R11,
 } asm_register_t;
@@ -61,6 +65,7 @@ typedef struct
 
 typedef enum
 {
+    OP_8_BYTES,
     OP_4_BYTES,
     OP_1_BYTE,
 } op_size;
@@ -76,6 +81,10 @@ typedef struct
 {
     int n_bytes;
 } asm_stackalloc_node;
+
+typedef struct {
+    int n_bytes;
+} asm_stackdealloc_node;
 
 typedef enum
 {
@@ -151,11 +160,20 @@ typedef struct
     char *identifier;
 } asm_label_node;
 
+typedef struct {
+    operand_node* op;
+} asm_push_node;
+
+typedef struct {
+    char* identifier;
+} asm_call_node;
+
 typedef enum
 {
     INSTR_MOV,
     INSTR_RET,
     INSTR_STACKALLOC,
+    INSTR_STACKDEALLOC,
     INSTR_UNARY,
     INSTR_BINARY,
     INSTR_IDIV,
@@ -165,6 +183,8 @@ typedef enum
     INSTR_JMPCC,
     INSTR_SETCC,
     INSTR_LABEL,
+    INSTR_PUSH,
+    INSTR_CALL,
 } instruction_type;
 
 typedef struct
@@ -174,6 +194,7 @@ typedef struct
     {
         asm_move_node *mov;
         asm_stackalloc_node *stackalloc;
+        asm_stackdealloc_node *stackdealloc;
         asm_unary_node *unary;
         asm_binary_node *binary;
         asm_idiv_node *idiv;
@@ -182,6 +203,8 @@ typedef struct
         asm_jmpcc_node *jmpcc;
         asm_setcc_node *setcc;
         asm_label_node *label;
+        asm_push_node* push;
+        asm_call_node* call;
     } instruction;
 } asm_instruction_node;
 
@@ -194,7 +217,7 @@ typedef struct asm_function_node
 
 typedef struct asm_program_node
 {
-    asm_function_node *function;
+    list(asm_function_node*)* functions;
 } asm_program_node;
 
 typedef asm_instruction_node asm_i;
@@ -226,6 +249,10 @@ asm_i *asm_create_jmp_instr(char *identifier);
 asm_i *asm_create_jmpcc_instr(cond_code type, char *identifier);
 asm_i *asm_create_cmp_instr(operand_node *src1, operand_node *src2);
 asm_i *asm_create_setcc_instr(cond_code type, operand_node *dest);
+asm_i *asm_create_stackalloc_instr(int size);
+asm_i* asm_create_stackdealloc_instr(int size);
+asm_i* asm_create_push_instr(operand_node* op);
+asm_i* asm_create_call_instr(char* identifier);
 
 operand_node *asm_create_register_operand(asm_register_t reg);
 asm_pseudo_node *asm_create_pseudo(char *identifier);

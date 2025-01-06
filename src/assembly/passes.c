@@ -23,7 +23,7 @@ void replace_pseudo_stack(stackmap *sm, operand_node *pseudo_node)
 
     pseudo_node->type = STACK; // switch this to a stack operand.
     asm_stack_node *stack = MALLOC(asm_stack_node);
-    stack->offset = stackmap_getoffset(sm, iden);
+    stack->offset = -stackmap_getoffset(sm, iden); // - from %rbp.
     free(pseudo_node->operand.pseudo);
     pseudo_node->operand.stack = stack;
 }
@@ -69,12 +69,19 @@ void replace_pseudo_function(asm_function_node *function)
         {
             replace_pseudo_stack(function->sm, instr->instruction.setcc->dest);
         }
+        else if (instr->type == INSTR_PUSH)
+        {
+            replace_pseudo_stack(function->sm, instr->instruction.push->op);
+        }
     }
 }
 
 void replace_pseudo_pass(asm_program_node *program)
 {
-    replace_pseudo_function(program->function);
+    for (int i = 0; i < program->functions->len; i++) {
+        asm_function_node* func = (asm_function_node*)list_get(program->functions, i);
+        replace_pseudo_function(func);
+    }
 }
 
 // PASS 2
@@ -102,7 +109,10 @@ void add_stackalloc_function_cleanup_operands_function(asm_function_node *functi
     list(asm_i *) *instrs = function->instructions;
 
     // insert the stackalloc instruction at the beginning of the function
-    asm_i *stackalloc_instr = asm_create_stackalloc_instr(stackmap_size(function->sm));
+    int n_bytes = stackmap_size(function->sm);
+    // we need to round up to the next multiple of 16 to maintain alignment
+    n_bytes = (n_bytes % 16 == 0) ? n_bytes : ((n_bytes / 16) + 1) * 16;
+    asm_i *stackalloc_instr = asm_create_stackalloc_instr(n_bytes);
     list_add(instrs, (void *)stackalloc_instr, 0);
 
     asm_i *instr;
@@ -203,6 +213,9 @@ void add_stackalloc_function_cleanup_operands_function(asm_function_node *functi
 
 void add_stackalloc_function_cleanup_operands(asm_program_node *program)
 {
-    add_stackalloc_function_cleanup_operands_function(program->function);
+    for (int i = 0; i < program->functions->len; i++) {
+        asm_function_node* func = (asm_function_node*)list_get(program->functions, i);
+        add_stackalloc_function_cleanup_operands_function(func);
+    }
 }
 #endif
