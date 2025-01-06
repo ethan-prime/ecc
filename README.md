@@ -8,6 +8,7 @@ features:
 - if statements
 - return statements
 - local variables
+- unary expressions (!, -, ~)
 - arbitrary binary expressions
 - compound statements
 - while, do while, and for loops
