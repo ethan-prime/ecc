@@ -19,90 +19,23 @@ void emit_suffix(FILE* file, op_size size) {
 
 void emit_register(FILE *file, asm_register_t reg, op_size size)
 {
-    switch (reg)
+    const char *registers[][3] = 
     {
-    case AX:
-    if (size == OP_1_BYTE) {
-        fprintf(file, "%%al");
-    } else if (size == OP_4_BYTES) {
-        fprintf(file, "%%eax");
-    } else if (size == OP_8_BYTES) {
-        fprintf(file, "%%rax");
-    }
-    break;
-    case DX:
-    if (size == OP_1_BYTE) {
-        fprintf(file, "%%dl");
-    } else if (size == OP_4_BYTES) {
-        fprintf(file, "%%edx");
-    } else if (size == OP_8_BYTES) {
-        fprintf(file, "%%rdx");
-    }
-    break;
-    case CX:
-    if (size == OP_1_BYTE) {
-        fprintf(file, "%%cl");
-    } else if (size == OP_4_BYTES) {
-        fprintf(file, "%%ecx");
-    } else if (size == OP_8_BYTES) {
-        fprintf(file, "%%rcx");
-    }
-    break;
-    case DI:
-    if (size == OP_1_BYTE) {
-        fprintf(file, "%%dil");
-    } else if (size == OP_4_BYTES) {
-        fprintf(file, "%%edi");
-    } else if (size == OP_8_BYTES) {
-        fprintf(file, "%%rdi");
-    }
-    break;
-    case SI:
-    if (size == OP_1_BYTE) {
-        fprintf(file, "%%sil");
-    } else if (size == OP_4_BYTES) {
-        fprintf(file, "%%esi");
-    } else if (size == OP_8_BYTES) {
-        fprintf(file, "%%rsi");
-    }
-    break;
-    case R8:
-    if (size == OP_1_BYTE) {
-        fprintf(file, "%%r8b");
-    } else if (size == OP_4_BYTES) {
-        fprintf(file, "%%r8d");
-    } else if (size == OP_8_BYTES) {
-        fprintf(file, "%%r8");
-    }
-    break;
-    case R9:
-    if (size == OP_1_BYTE) {
-        fprintf(file, "%%r9b");
-    } else if (size == OP_4_BYTES) {
-        fprintf(file, "%%r9d");
-    } else if (size == OP_8_BYTES) {
-        fprintf(file, "%%r9");
-    }
-    break;
-    case R10:
-    if (size == OP_1_BYTE) {
-        fprintf(file, "%%r10b");
-    } else if (size == OP_4_BYTES) {
-        fprintf(file, "%%r10d");
-    } else if (size == OP_8_BYTES) {
-        fprintf(file, "%%r10");
-    }
-    break;
-    case R11:
-    if (size == OP_1_BYTE) {
-        fprintf(file, "%%r11b");
-    } else if (size == OP_4_BYTES) {
-        fprintf(file, "%%r11d");
-    } else if (size == OP_8_BYTES) {
-        fprintf(file, "%%r11");
-    }
-    break;
-    }
+        {"%al", "%eax", "%rax"},   // AX
+        {"%dl", "%edx", "%rdx"},   // DX
+        {"%cl", "%ecx", "%rcx"},   // CX
+        {"%dil", "%edi", "%rdi"},  // DI
+        {"%sil", "%esi", "%rsi"},  // SI
+        {"%r8b", "%r8d", "%r8"},   // R8
+        {"%r9b", "%r9d", "%r9"},   // R9
+        {"%r10b", "%r10d", "%r10"}, // R10
+        {"%r11b", "%r11d", "%r11"} // R11
+    };
+
+    int size_index = (size == OP_1_BYTE) ? 0 :
+                     (size == OP_4_BYTES) ? 1 : 2;
+
+    fprintf(file, "%s", registers[reg][size_index]);
 }
 
 void emit_operand(FILE *file, operand_node *op, op_size size)
