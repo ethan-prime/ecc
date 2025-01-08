@@ -19,6 +19,12 @@ Features:
 - Library Functions
 - Compiling to Object Files (-c)
 
+## Looking to contribute?
+Pull requests are welcome! Here is a list of things I think could use some re-factoring:
+- Implement src/utils/identifiermap.[ch] using the src/utils/utils_hashmap.[ch] instead of src/utils/utils_list.[ch]
+
+## Examples
+
 ```
 printint.c - prints int to stdout:
 ```
