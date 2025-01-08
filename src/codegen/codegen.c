@@ -22,8 +22,8 @@ void emit_register(FILE *file, asm_register_t reg, op_size size)
     const char *registers[][3] = 
     {
         {"%al", "%eax", "%rax"},   // AX
-        {"%dl", "%edx", "%rdx"},   // DX
         {"%cl", "%ecx", "%rcx"},   // CX
+        {"%dl", "%edx", "%rdx"},   // DX
         {"%dil", "%edi", "%rdi"},  // DI
         {"%sil", "%esi", "%rsi"},  // SI
         {"%r8b", "%r8d", "%r8"},   // R8
