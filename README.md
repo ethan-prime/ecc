@@ -2,7 +2,7 @@
 Ethan's C Compiler, written in C! (for Linux)
 
 ## Dependencies
-- gcc
+- gcc (we only need the assembler, not the compiler... maybe I'll work on an assembler soon)
 
 ## Status
 Features:
